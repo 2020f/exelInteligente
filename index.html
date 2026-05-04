@@ -1,0 +1,2563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cientifico Data — Dashboard Entregas</title>
+<script src="libs/xlsx.min.js"></script>
+<script src="libs/chart.min.js"></script>
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface2: #263347;
+    --border: #334155;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --blue: #38bdf8;
+    --purple: #a78bfa;
+    --green: #34d399;
+    --amber: #f59e0b;
+    --red: #f87171;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── UPLOAD SCREEN ── */
+  #upload-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 32px;
+  }
+
+  .upload-logo {
+    text-align: center;
+  }
+
+  .upload-logo h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--blue);
+    letter-spacing: -0.5px;
+  }
+
+  .upload-logo p {
+    color: var(--muted);
+    margin-top: 4px;
+    font-size: 15px;
+  }
+
+  #drop-zone {
+    width: 420px;
+    max-width: 90vw;
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    padding: 48px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: var(--surface);
+  }
+
+  #drop-zone:hover, #drop-zone.drag-over {
+    border-color: var(--blue);
+    background: var(--surface2);
+  }
+
+  #drop-zone .drop-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  #drop-zone h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  #drop-zone p {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+
+  .btn-upload {
+    background: var(--blue);
+    color: #0f172a;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .btn-upload:hover { opacity: 0.85; }
+
+  #file-input { display: none; }
+
+  #upload-error {
+    color: var(--red);
+    font-size: 13px;
+    margin-top: 8px;
+    display: none;
+  }
+
+  /* ── DASHBOARD ── */
+  #dashboard { display: none; flex-direction: column; min-height: 100vh; }
+
+  /* Header */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    gap: 16px;
+  }
+
+  .brand {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--blue);
+    white-space: nowrap;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+  }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover { color: var(--text); background: var(--surface2); }
+  .tab-btn.active { color: var(--blue); background: rgba(56,189,248,0.1); }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-new {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .btn-new:hover { color: var(--text); border-color: var(--text); }
+
+  /* Filter bar */
+  .filter-bar {
+    padding: 10px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .filter-bar label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  .filter-bar input,
+  .filter-bar select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    min-width: 120px;
+    max-width: 180px;
+    transition: border-color 0.2s;
+  }
+
+  .filter-bar select { cursor: pointer; }
+
+  .filter-bar input:focus,
+  .filter-bar select:focus {
+    outline: none;
+    border-color: var(--blue);
+  }
+
+  .btn-clear {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-left: auto;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .btn-clear:hover { color: var(--red); border-color: var(--red); }
+
+  /* Main content */
+  main {
+    flex: 1;
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* KPI Cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .kpi-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .kpi-value {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .kpi-card:nth-child(1) .kpi-value { color: var(--blue); }
+  .kpi-card:nth-child(2) .kpi-value { color: var(--green); }
+  .kpi-card:nth-child(3) .kpi-value { color: var(--red); }
+  .kpi-card:nth-child(4) .kpi-value { color: var(--amber); }
+  .kpi-card:nth-child(5) .kpi-value { color: var(--purple); }
+
+  /* Chart grids */
+  .charts-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .charts-1 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .chart-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+  }
+
+  .chart-wrap {
+    position: relative;
+    height: 280px;
+  }
+
+  /* Tables */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .table-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(51,65,85,0.4);
+    transition: background 0.15s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+
+  tbody td {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge-blue   { background: rgba(56,189,248,0.15);  color: var(--blue); }
+  .badge-purple { background: rgba(167,139,250,0.15); color: var(--purple); }
+  .badge-green  { background: rgba(52,211,153,0.15);  color: var(--green); }
+  .badge-amber  { background: rgba(245,158,11,0.15);  color: var(--amber); }
+  .badge-red    { background: rgba(248,113,113,0.15); color: var(--red); }
+
+  .text-muted { color: var(--muted); }
+  .text-right { text-align: right; }
+  .font-mono { font-family: 'Cascadia Code', 'Consolas', monospace; }
+
+  /* No data state */
+  .no-data {
+    text-align: center;
+    color: var(--muted);
+    padding: 48px 16px;
+    font-size: 15px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    .charts-2 { grid-template-columns: 1fr; }
+    .header-top { flex-wrap: wrap; gap: 8px; }
+    .tabs { flex-wrap: wrap; }
+    .tab-btn { padding: 6px 10px; font-size: 12px; }
+    main { padding: 16px; }
+  }
+
+  @media (max-width: 480px) {
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .kpi-value { font-size: 24px; }
+    .brand { font-size: 14px; }
+  }
+
+  /* ── UPLOAD MULTI-CARD GRID ── */
+  .upload-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(280px, 420px));
+    gap: 20px;
+    width: 100%;
+    max-width: 880px;
+    padding: 0 16px;
+  }
+
+  .upload-cards #drop-zone { width: 100%; padding: 32px 24px; }
+
+  .upload-card {
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    padding: 32px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .upload-card:hover, .upload-card.drag-over {
+    border-color: var(--blue);
+    background: var(--surface2);
+  }
+
+  .card-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(56,189,248,0.12);
+    color: var(--blue);
+    margin-bottom: 2px;
+  }
+
+  .card-diaria  { border-color: rgba(167,139,250,0.4); }
+  .card-diaria:hover, .card-diaria.drag-over { border-color: var(--purple); }
+  .card-diaria .card-badge { background: rgba(167,139,250,0.12); color: var(--purple); }
+
+  .card-almacen { border-color: rgba(245,158,11,0.4); }
+  .card-almacen:hover, .card-almacen.drag-over { border-color: var(--amber); }
+  .card-almacen .card-badge { background: rgba(245,158,11,0.12); color: var(--amber); }
+
+  .card-operacion { border-color: rgba(248,113,113,0.4); }
+  .card-operacion:hover, .card-operacion.drag-over { border-color: var(--red); }
+  .card-operacion .card-badge { background: rgba(248,113,113,0.18); color: var(--red); }
+
+  .upload-card .drop-icon { font-size: 36px; margin-bottom: 2px; display: block; }
+  .upload-card h2 { font-size: 15px; font-weight: 600; }
+  .upload-card p { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+  .upload-status { font-size: 12px; color: var(--green); min-height: 16px; }
+  .upload-err    { font-size: 12px; color: var(--red);   min-height: 16px; }
+
+  /* ── KPI PROBLEMA EMPHASIS ── */
+  .kpi-card.kpi-problema {
+    border-color: rgba(248,113,113,0.6);
+    background: rgba(248,113,113,0.07);
+    position: relative;
+  }
+  .kpi-card.kpi-problema::before {
+    content: '⚠ ATENCIÓN';
+    position: absolute;
+    top: 8px; right: 10px;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
+    color: var(--red); opacity: 0.7;
+  }
+  .kpi-card.kpi-problema .kpi-value { color: var(--red); }
+  .kpi-card.kpi-problema .kpi-label { color: #f87171; }
+
+  @media (max-width: 900px) { .upload-cards { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 580px) { .upload-cards { grid-template-columns: 1fr; } }
+
+  /* ── MINI KPI CARDS (para tabs de velocidad / pipeline) ── */
+  .kpi-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .kpi-mini-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .kpi-mini-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .kpi-mini-card .kpi-mini-label {
+    font-size: 10px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+  .kpi-mini-card .kpi-mini-value {
+    font-size: 28px; font-weight: 700; line-height: 1;
+  }
+  .kpi-mini-card .kpi-mini-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .kpi-mini-card.vel-0 .kpi-mini-value { color: var(--green); }
+  .kpi-mini-card.vel-1 .kpi-mini-value { color: var(--blue); }
+  .kpi-mini-card.vel-2 .kpi-mini-value { color: #60a5fa; }
+  .kpi-mini-card.vel-3 .kpi-mini-value { color: var(--amber); }
+  .kpi-mini-card.vel-4 .kpi-mini-value { color: var(--red); }
+
+  /* Insight box */
+  .insight-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex; gap: 20px; flex-wrap: wrap; align-items: center;
+  }
+  .insight-item { display: flex; flex-direction: column; gap: 2px; }
+  .insight-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+  .insight-val { font-size: 18px; font-weight: 700; }
+
+  @media (max-width: 768px) { .kpi-mini-grid, .kpi-mini-grid.cols-4 { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     UPLOAD SCREEN
+══════════════════════════════════════════════ -->
+<div id="upload-screen">
+  <div class="upload-logo">
+    <h1>📦 Cientifico Data</h1>
+    <p>Dashboard de Entregas</p>
+  </div>
+
+  <div class="upload-cards">
+
+    <!-- ─ Tarjeta original: Reporte de Entregas ─ -->
+    <div id="drop-zone">
+      <span class="drop-icon">📊</span>
+      <h2>Carga tu reporte Excel</h2>
+      <p>Arrastra el archivo aquí o usa el botón para seleccionarlo</p>
+      <button class="btn-upload" onclick="document.getElementById('file-input').click()">
+        Seleccionar Excel
+      </button>
+      <input type="file" id="file-input" accept=".xlsx,.xls">
+      <p id="upload-error"></p>
+    </div>
+
+    <!-- ─ Tarjeta 2: OPERACION DIARIA ─ -->
+    <div id="drop-zone-diaria" class="upload-card card-diaria">
+      <span class="card-badge">Operación Diaria</span>
+      <span class="drop-icon">📋</span>
+      <h2>Operación Diaria</h2>
+      <p>Firmados, no firmados y paquetes problemáticos por piloto</p>
+      <button class="btn-upload" style="background:var(--purple)" onclick="document.getElementById('file-input-diaria').click()">
+        Seleccionar Excel
+      </button>
+      <input type="file" id="file-input-diaria" accept=".xlsx,.xls">
+      <span class="upload-status" id="status-diaria"></span>
+      <span class="upload-err"    id="err-diaria"></span>
+    </div>
+
+    <!-- ─ Tarjeta 3: TOTAL SALIDA DEL ALMACEN ─ -->
+    <div id="drop-zone-almacen" class="upload-card card-almacen">
+      <span class="card-badge">Total Salida del Almacén</span>
+      <span class="drop-icon">🏭</span>
+      <h2>Total Salida del Almacén</h2>
+      <p>Guías enviadas, firmadas, en ruta y sin cerrar</p>
+      <button class="btn-upload" style="background:var(--amber);color:#0f172a" onclick="document.getElementById('file-input-almacen').click()">
+        Seleccionar Excel
+      </button>
+      <input type="file" id="file-input-almacen" accept=".xlsx,.xls">
+      <span class="upload-status" id="status-almacen"></span>
+      <span class="upload-err"    id="err-almacen"></span>
+    </div>
+
+    <!-- ─ Tarjeta 4: TOTALIDAD SALIDA DE OPERACION ─ -->
+    <div id="drop-zone-operacion" class="upload-card card-operacion">
+      <span class="card-badge">⚠ Totalidad Salida de Operación</span>
+      <span class="drop-icon">⚡</span>
+      <h2>Totalidad Salida de Operación</h2>
+      <p>Incluye <strong style="color:var(--red)">Paquetes Problemáticos y no Firmados</strong></p>
+      <button class="btn-upload" style="background:var(--red)" onclick="document.getElementById('file-input-operacion').click()">
+        Seleccionar Excel
+      </button>
+      <input type="file" id="file-input-operacion" accept=".xlsx,.xls">
+      <span class="upload-status" id="status-operacion"></span>
+      <span class="upload-err"    id="err-operacion"></span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     DASHBOARD
+══════════════════════════════════════════════ -->
+<div id="dashboard">
+
+  <header>
+    <div class="header-top">
+      <span class="brand">📦 Cientifico Data</span>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('resumen')">Resumen</button>
+        <button class="tab-btn" onclick="switchTab('provincias')">Provincias</button>
+        <button class="tab-btn" onclick="switchTab('pilotos')">Pilotos</button>
+        <button class="tab-btn" onclick="switchTab('puntos')">Puntos de Entrega</button>
+      </div>
+      <div class="header-actions">
+        <button class="btn-new" onclick="resetApp()">↩ Cargar otro archivo</button>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <label>Desde</label>
+      <input type="date" id="f-desde" onchange="applyFilters()">
+      <label>Hasta</label>
+      <input type="date" id="f-hasta" onchange="applyFilters()">
+      <label>Provincia</label>
+      <select id="f-provincia" onchange="applyFilters()">
+        <option value="">Todas</option>
+      </select>
+      <label>Piloto</label>
+      <select id="f-piloto" onchange="applyFilters()">
+        <option value="">Todos</option>
+      </select>
+      <label>Punto</label>
+      <select id="f-punto" onchange="applyFilters()">
+        <option value="">Todos</option>
+      </select>
+      <button class="btn-clear" onclick="clearFilters()">✕ Limpiar</button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── TAB RESUMEN ── -->
+    <div id="tab-resumen" class="tab-panel active">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Paquetes Asignados</div>
+          <div class="kpi-value" id="kpi-asignados">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Paquetes Entregados</div>
+          <div class="kpi-value" id="kpi-entregados">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Pendientes</div>
+          <div class="kpi-value" id="kpi-pendientes">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">% Efectividad</div>
+          <div class="kpi-value" id="kpi-efectividad">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Pilotos Activos</div>
+          <div class="kpi-value" id="kpi-pilotos">—</div>
+        </div>
+      </div>
+
+      <div class="charts-2">
+        <div class="chart-card">
+          <div class="chart-title">Entregas por Fecha</div>
+          <div class="chart-wrap"><canvas id="chart-linea"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Distribución por Provincia</div>
+          <div class="chart-wrap"><canvas id="chart-dona"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB PROVINCIAS ── -->
+    <div id="tab-provincias" class="tab-panel">
+      <div class="charts-2">
+        <div class="chart-card">
+          <div class="chart-title">Asignados vs Entregados por Provincia</div>
+          <div class="chart-wrap"><canvas id="chart-prov-entregas"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">% Efectividad por Provincia</div>
+          <div class="chart-wrap"><canvas id="chart-prov-importe"></canvas></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header">Detalle por Provincia</div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Provincia</th>
+                <th class="text-right">Asignados</th>
+                <th class="text-right">Entregados</th>
+                <th class="text-right">Pendientes</th>
+                <th class="text-right">Efectividad</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-provincias"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB PILOTOS ── -->
+    <div id="tab-pilotos" class="tab-panel">
+      <div class="charts-2">
+        <div class="chart-card">
+          <div class="chart-title">Asignados vs Entregados por Piloto</div>
+          <div class="chart-wrap"><canvas id="chart-pilot-entregas"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">% Efectividad por Piloto</div>
+          <div class="chart-wrap"><canvas id="chart-pilot-importe"></canvas></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header">Detalle por Piloto</div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Piloto</th>
+                <th class="text-right">Asignados</th>
+                <th class="text-right">Entregados</th>
+                <th class="text-right">Pendientes</th>
+                <th class="text-right">Efectividad</th>
+                <th class="text-right">Provincias</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-pilotos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB PUNTOS ── -->
+    <div id="tab-puntos" class="tab-panel">
+      <div class="charts-1">
+        <div class="chart-card">
+          <div class="chart-title">Top Puntos de Entrega</div>
+          <div class="chart-wrap" style="height:360px"><canvas id="chart-puntos"></canvas></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header">Detalle por Punto de Entrega</div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Punto de Entrega</th>
+                <th>Provincia</th>
+                <th class="text-right">Asignados</th>
+                <th class="text-right">Entregados</th>
+                <th class="text-right">Efectividad</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-puntos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     DASHBOARD — OPERACION DIARIA
+     Enfoque: Velocidad de firma T+0…T+7
+══════════════════════════════════════════════ -->
+<div id="dash-diaria" style="display:none;flex-direction:column;min-height:100vh">
+  <header>
+    <div class="header-top">
+      <span class="brand">📋 Operación Diaria</span>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTabD('diaria','resumen',event)">Resumen</button>
+        <button class="tab-btn" onclick="switchTabD('diaria','velocidad',event)">Velocidad de Firma</button>
+        <button class="tab-btn" onclick="switchTabD('diaria','pilotos',event)">Pilotos</button>
+        <button class="tab-btn" onclick="switchTabD('diaria','puntos',event)">Puntos</button>
+      </div>
+      <div class="header-actions">
+        <button class="btn-new" onclick="closeDash('dash-diaria')">↩ Volver</button>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <label>Desde</label><input type="date" id="d-desde" onchange="applyDiariaFilters()">
+      <label>Hasta</label><input type="date" id="d-hasta" onchange="applyDiariaFilters()">
+      <label>Provincia</label>
+      <select id="d-provincia" onchange="applyDiariaFilters()"><option value="">Todas</option></select>
+      <label>Piloto</label>
+      <select id="d-piloto" onchange="applyDiariaFilters()"><option value="">Todos</option></select>
+      <button class="btn-clear" onclick="clearDiariaFilters()">✕ Limpiar</button>
+    </div>
+  </header>
+  <main>
+    <!-- Resumen -->
+    <div id="diaria-tab-resumen" class="tab-panel active">
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Paquetes Asignados</div><div class="kpi-value" id="d-kpi-asignados">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Paquetes Firmados</div><div class="kpi-value" id="d-kpi-firmados">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">No Firmados</div><div class="kpi-value" id="d-kpi-nofirmados">—</div></div>
+        <div class="kpi-card kpi-problema"><div class="kpi-label">Problemáticos</div><div class="kpi-value" id="d-kpi-problematicos">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">% Tasa Firma</div><div class="kpi-value" id="d-kpi-tasa">—</div></div>
+      </div>
+      <div class="charts-2">
+        <div class="chart-card">
+          <div class="chart-title">Asignados vs Firmados por Fecha</div>
+          <div class="chart-wrap"><canvas id="d-chart-linea"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">¿Por qué no se entregó? — Desglose</div>
+          <div class="chart-wrap"><canvas id="d-chart-noentrega"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <!-- Velocidad de Firma (T+N) -->
+    <div id="diaria-tab-velocidad" class="tab-panel">
+      <div class="kpi-mini-grid cols-4">
+        <div class="kpi-mini-card vel-0"><div class="kpi-mini-label">Mismo Día (T+0)</div><div class="kpi-mini-value" id="d-vel-t0">—</div><div class="kpi-mini-sub">del total firmado</div></div>
+        <div class="kpi-mini-card vel-1"><div class="kpi-mini-label">Acum. hasta T+1</div><div class="kpi-mini-value" id="d-vel-t1">—</div><div class="kpi-mini-sub">del total firmado</div></div>
+        <div class="kpi-mini-card vel-2"><div class="kpi-mini-label">Acum. hasta T+2</div><div class="kpi-mini-value" id="d-vel-t2">—</div><div class="kpi-mini-sub">del total firmado</div></div>
+        <div class="kpi-mini-card vel-4"><div class="kpi-mini-label">Rezagados T+3 o más</div><div class="kpi-mini-value" id="d-vel-t3plus">—</div><div class="kpi-mini-sub">del total firmado</div></div>
+      </div>
+      <div class="charts-2">
+        <div class="chart-card">
+          <div class="chart-title">Firmados por Día de Tránsito (T+N)</div>
+          <div class="chart-wrap" style="height:300px"><canvas id="d-chart-speed-bar"></canvas></div>
+        </div>
+        <div class="chart-card" style="border-color:rgba(248,113,113,0.4)">
+          <div class="chart-title" style="color:var(--red)">Antigüedad de Pendientes no Firmados</div>
+          <div class="chart-wrap" style="height:300px"><canvas id="d-chart-aging"></canvas></div>
+        </div>
+      </div>
+      <div class="insight-box" id="d-insight-box"></div>
+    </div>
+    <!-- Pilotos -->
+    <div id="diaria-tab-pilotos" class="tab-panel">
+      <div class="charts-2">
+        <div class="chart-card"><div class="chart-title">Asignados vs Firmados — Top 10 Pilotos</div><div class="chart-wrap"><canvas id="d-chart-pilot-bar"></canvas></div></div>
+        <div class="chart-card" style="border-color:rgba(248,113,113,0.4)"><div class="chart-title" style="color:var(--red)">⚠ Problemáticos + Devoluciones por Piloto</div><div class="chart-wrap"><canvas id="d-chart-pilot-prob"></canvas></div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header">Ranking de Pilotos — Eficiencia + Velocidad</div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>#</th><th>Piloto</th>
+          <th class="text-right">Asignados</th><th class="text-right">Firmados</th>
+          <th class="text-right">T+0 🚀</th>
+          <th class="text-right">No Firmados</th>
+          <th class="text-right" style="color:var(--red)">⚠ Prob.</th>
+          <th class="text-right">Devol.</th><th class="text-right">En Almacén</th><th class="text-right">Tasa</th>
+        </tr></thead><tbody id="d-tbody-pilotos"></tbody></table></div>
+      </div>
+    </div>
+    <!-- Puntos -->
+    <div id="diaria-tab-puntos" class="tab-panel">
+      <div class="charts-2">
+        <div class="chart-card"><div class="chart-title">Top Puntos — Asignados vs Firmados</div><div class="chart-wrap" style="height:340px"><canvas id="d-chart-puntos"></canvas></div></div>
+        <div class="chart-card" style="border-color:rgba(248,113,113,0.4)"><div class="chart-title" style="color:var(--red)">⚠ Problemáticos por Punto</div><div class="chart-wrap" style="height:340px"><canvas id="d-chart-puntos-prob"></canvas></div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header">Detalle por Punto de Entrega</div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>#</th><th>Punto</th><th>Provincia</th>
+          <th class="text-right">Asignados</th><th class="text-right">Firmados</th>
+          <th class="text-right">T+0 🚀</th>
+          <th class="text-right" style="color:var(--red)">⚠ Prob.</th><th class="text-right">Tasa</th>
+        </tr></thead><tbody id="d-tbody-puntos"></tbody></table></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     DASHBOARD — TOTAL SALIDA DEL ALMACEN
+     Enfoque: Embudo de pipeline logístico
+══════════════════════════════════════════════ -->
+<div id="dash-almacen" style="display:none;flex-direction:column;min-height:100vh">
+  <header>
+    <div class="header-top">
+      <span class="brand">🏭 Total Salida del Almacén</span>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTabD('almacen','resumen',event)">Resumen</button>
+        <button class="tab-btn" onclick="switchTabD('almacen','pipeline',event)">Pipeline Logístico</button>
+        <button class="tab-btn" onclick="switchTabD('almacen','provincias',event)">Provincias</button>
+        <button class="tab-btn" onclick="switchTabD('almacen','pdvs',event)">PDVs</button>
+      </div>
+      <div class="header-actions">
+        <button class="btn-new" onclick="closeDash('dash-almacen')">↩ Volver</button>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <label>Desde</label><input type="date" id="a-desde" onchange="applyAlmacenFilters()">
+      <label>Hasta</label><input type="date" id="a-hasta" onchange="applyAlmacenFilters()">
+      <label>Provincia</label>
+      <select id="a-provincia" onchange="applyAlmacenFilters()"><option value="">Todas</option></select>
+      <button class="btn-clear" onclick="clearAlmacenFilters()">✕ Limpiar</button>
+    </div>
+  </header>
+  <main>
+    <!-- Resumen -->
+    <div id="almacen-tab-resumen" class="tab-panel active">
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Guías Enviadas</div><div class="kpi-value" id="a-kpi-enviadas">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Llegaron al Hub</div><div class="kpi-value" id="a-kpi-llegada">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Firmadas (Entregadas)</div><div class="kpi-value" id="a-kpi-firmadas">—</div></div>
+        <div class="kpi-card kpi-problema"><div class="kpi-label">Atascadas en Hub</div><div class="kpi-value" id="a-kpi-hub">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">% Firma Efectiva</div><div class="kpi-value" id="a-kpi-eficiencia">—</div></div>
+      </div>
+      <div class="charts-2">
+        <div class="chart-card">
+          <div class="chart-title">Pipeline — ¿Dónde están las guías?</div>
+          <div class="chart-wrap" style="height:280px"><canvas id="a-chart-funnel"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Composición del Stock sin Cerrar</div>
+          <div class="chart-wrap"><canvas id="a-chart-composicion"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <!-- Pipeline Logístico -->
+    <div id="almacen-tab-pipeline" class="tab-panel">
+      <div class="kpi-mini-grid cols-4">
+        <div class="kpi-mini-card vel-0"><div class="kpi-mini-label">Tasa de Llegada</div><div class="kpi-mini-value" id="a-vel-llegada">—</div><div class="kpi-mini-sub">enviadas → hub</div></div>
+        <div class="kpi-mini-card vel-1"><div class="kpi-mini-label">Tasa Salida a Ruta</div><div class="kpi-mini-value" id="a-vel-ruta">—</div><div class="kpi-mini-sub">llegada → en ruta</div></div>
+        <div class="kpi-mini-card vel-2"><div class="kpi-mini-label">Tasa de Firma</div><div class="kpi-mini-value" id="a-vel-firma">—</div><div class="kpi-mini-sub">en ruta → firmada</div></div>
+        <div class="kpi-mini-card vel-4"><div class="kpi-mini-label">Tasa de Problema</div><div class="kpi-mini-value" id="a-vel-problema">—</div><div class="kpi-mini-sub">anorm+reten+devuel</div></div>
+      </div>
+      <div class="charts-2">
+        <div class="chart-card">
+          <div class="chart-title">Flujo del Pipeline por Provincia</div>
+          <div class="chart-wrap" style="height:320px"><canvas id="a-chart-pipeline-prov"></canvas></div>
+        </div>
+        <div class="chart-card" style="border-color:rgba(248,113,113,0.4)">
+          <div class="chart-title" style="color:var(--red)">Alertas Logísticas — Retenidos / Anormales / Devueltos</div>
+          <div class="chart-wrap" style="height:320px"><canvas id="a-chart-alertas"></canvas></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header">Estado completo por Provincia</div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>#</th><th>Provincia</th>
+          <th class="text-right">Enviadas</th><th class="text-right">Llegada</th>
+          <th class="text-right">Hub (atascadas)</th><th class="text-right">En Ruta</th>
+          <th class="text-right">Firmadas</th><th class="text-right">Anorm.</th>
+          <th class="text-right">Reten.</th><th class="text-right">Devuel.</th><th class="text-right">Sin Cerrar</th>
+        </tr></thead><tbody id="a-tbody-pipeline"></tbody></table></div>
+      </div>
+    </div>
+    <!-- Provincias -->
+    <div id="almacen-tab-provincias" class="tab-panel">
+      <div class="charts-2">
+        <div class="chart-card"><div class="chart-title">Enviadas vs Firmadas por Provincia</div><div class="chart-wrap"><canvas id="a-chart-prov-bar"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Atascadas en Hub por Provincia</div><div class="chart-wrap"><canvas id="a-chart-prov-sincerrar"></canvas></div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header">Detalle por Provincia</div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>#</th><th>Provincia</th>
+          <th class="text-right">Enviadas</th><th class="text-right">Firmadas</th>
+          <th class="text-right">En Ruta</th><th class="text-right">Retenidos</th><th class="text-right">Sin Cerrar</th>
+        </tr></thead><tbody id="a-tbody-provincias"></tbody></table></div>
+      </div>
+    </div>
+    <!-- PDVs -->
+    <div id="almacen-tab-pdvs" class="tab-panel">
+      <div class="charts-1">
+        <div class="chart-card"><div class="chart-title">Top PDVs — Enviadas vs Firmadas</div><div class="chart-wrap" style="height:360px"><canvas id="a-chart-pdvs"></canvas></div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header">Detalle por PDV</div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>#</th><th>PDV</th><th>Provincia</th>
+          <th class="text-right">Enviadas</th><th class="text-right">Firmadas</th>
+          <th class="text-right">En Ruta</th><th class="text-right">Sin Cerrar</th>
+        </tr></thead><tbody id="a-tbody-pdvs"></tbody></table></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     DASHBOARD — TOTALIDAD DE OPERACION
+     Enfoque: Calidad + Curva acumulada T+0…T+7
+══════════════════════════════════════════════ -->
+<div id="dash-operacion" style="display:none;flex-direction:column;min-height:100vh">
+  <header>
+    <div class="header-top">
+      <span class="brand">⚡ Totalidad de Operación</span>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTabD('operacion','resumen',event)">Resumen</button>
+        <button class="tab-btn" onclick="switchTabD('operacion','velocidad',event)">T+ Velocidad</button>
+        <button class="tab-btn" onclick="switchTabD('operacion','provincias',event)">Provincias</button>
+        <button class="tab-btn" onclick="switchTabD('operacion','pdvs',event)">PDVs</button>
+      </div>
+      <div class="header-actions">
+        <button class="btn-new" onclick="closeDash('dash-operacion')">↩ Volver</button>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <label>Desde</label><input type="date" id="o-desde" onchange="applyOperacionFilters()">
+      <label>Hasta</label><input type="date" id="o-hasta" onchange="applyOperacionFilters()">
+      <label>Provincia</label>
+      <select id="o-provincia" onchange="applyOperacionFilters()"><option value="">Todas</option></select>
+      <button class="btn-clear" onclick="clearOperacionFilters()">✕ Limpiar</button>
+    </div>
+  </header>
+  <main>
+    <!-- Resumen -->
+    <div id="operacion-tab-resumen" class="tab-panel active">
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Volumen a Evaluar</div><div class="kpi-value" id="o-kpi-volumen">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Paquetes Firmados</div><div class="kpi-value" id="o-kpi-firmados">—</div></div>
+        <div class="kpi-card kpi-problema"><div class="kpi-label">⚠ Problemáticos y no Firmados</div><div class="kpi-value" id="o-kpi-problematicos">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">En Ruta sin Firma</div><div class="kpi-value" id="o-kpi-enrutasinfirma">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Tasa de Recepción</div><div class="kpi-value" id="o-kpi-tasa">—</div></div>
+      </div>
+      <div class="charts-2">
+        <div class="chart-card">
+          <div class="chart-title">Firmados vs No Firmados por Fecha</div>
+          <div class="chart-wrap"><canvas id="o-chart-linea"></canvas></div>
+        </div>
+        <div class="chart-card" style="border-color:rgba(248,113,113,0.5)">
+          <div class="chart-title" style="color:var(--red)">⚠ Paquetes Problemáticos vs No Problemáticos</div>
+          <div class="chart-wrap"><canvas id="o-chart-problematicos"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <!-- T+ Velocidad -->
+    <div id="operacion-tab-velocidad" class="tab-panel">
+      <div class="kpi-mini-grid">
+        <div class="kpi-mini-card vel-0"><div class="kpi-mini-label">Tasa firma T+0</div><div class="kpi-mini-value" id="o-vel-t0">—</div><div class="kpi-mini-sub">mismo día</div></div>
+        <div class="kpi-mini-card vel-1"><div class="kpi-mini-label">Tasa firma T+1</div><div class="kpi-mini-value" id="o-vel-t1">—</div><div class="kpi-mini-sub">siguiente día</div></div>
+        <div class="kpi-mini-card vel-2"><div class="kpi-mini-label">Tasa firma T+2</div><div class="kpi-mini-value" id="o-vel-t2">—</div><div class="kpi-mini-sub">2do día</div></div>
+        <div class="kpi-mini-card vel-3"><div class="kpi-mini-label">Tasa firma T+3</div><div class="kpi-mini-value" id="o-vel-t3">—</div><div class="kpi-mini-sub">3er día</div></div>
+        <div class="kpi-mini-card vel-4"><div class="kpi-mini-label">Tasa firma T+4</div><div class="kpi-mini-value" id="o-vel-t4">—</div><div class="kpi-mini-sub">4to día</div></div>
+      </div>
+      <div class="charts-2">
+        <div class="chart-card">
+          <div class="chart-title">Curva de Firma Acumulada T+0 → T+7</div>
+          <div class="chart-wrap"><canvas id="o-chart-curva"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Rendimiento por Tipo de Negocio</div>
+          <div class="chart-wrap"><canvas id="o-chart-negocio"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <!-- Provincias -->
+    <div id="operacion-tab-provincias" class="tab-panel">
+      <div class="charts-2">
+        <div class="chart-card"><div class="chart-title">Firmados vs No Firmados por Provincia</div><div class="chart-wrap"><canvas id="o-chart-prov-bar"></canvas></div></div>
+        <div class="chart-card" style="border-color:rgba(248,113,113,0.5)">
+          <div class="chart-title" style="color:var(--red)">⚠ Problemáticos por Provincia</div>
+          <div class="chart-wrap"><canvas id="o-chart-prov-prob"></canvas></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header">Detalle por Provincia</div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>#</th><th>Provincia</th>
+          <th class="text-right">Volumen</th><th class="text-right">Firmados</th>
+          <th class="text-right">No Firmados</th>
+          <th class="text-right" style="color:var(--red)">⚠ Problemáticos</th>
+          <th class="text-right">No Prob.</th><th class="text-right">Tasa</th>
+        </tr></thead><tbody id="o-tbody-provincias"></tbody></table></div>
+      </div>
+    </div>
+    <!-- PDVs -->
+    <div id="operacion-tab-pdvs" class="tab-panel">
+      <div class="charts-1">
+        <div class="chart-card" style="border-color:rgba(248,113,113,0.5)">
+          <div class="chart-title" style="color:var(--red)">⚠ Top PDVs — Problemáticos y no Firmados</div>
+          <div class="chart-wrap" style="height:360px"><canvas id="o-chart-pdvs"></canvas></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-card-header">Detalle por PDV (ordenado por problemáticos)</div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>#</th><th>PDV</th><th>Provincia</th><th>Tipo Negocio</th>
+          <th class="text-right">Volumen</th><th class="text-right">Firmados</th>
+          <th class="text-right">No Firmados</th>
+          <th class="text-right" style="color:var(--red)">⚠ Problemáticos</th>
+          <th class="text-right">Tasa</th>
+        </tr></thead><tbody id="o-tbody-pdvs"></tbody></table></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA & STATE
+// ══════════════════════════════════════════════
+window.DATA = [];
+const charts = {};
+
+// Columnas del Excel:
+// A = Fecha de envio
+// B = Centro financiero final
+// C = Provincia receptora
+// D = Punto de entrega
+// E = Nombre del puesto
+// F = A quien liquidar  (piloto)
+// G = Recibido por
+// H = Importe de la entrega  → paquetes ASIGNADOS
+// I = %                      → porcentaje de efectividad
+// J = ENTREGADO              → paquetes ENTREGADOS
+// K = TOTAL DEL DIA
+
+const PALETTE_BLUE   = ['#38bdf8','#0ea5e9','#0284c7','#0369a1','#075985','#0c4a6e','#38bdf8cc','#0ea5e9cc','#0284c7cc','#0369a1cc','#075985cc','#0c4a6ecc','#38bdf8aa','#0ea5e9aa','#0284c7aa'];
+const PALETTE_PURPLE = ['#a78bfa','#8b5cf6','#7c3aed','#6d28d9','#5b21b6','#4c1d95','#a78bfacc','#8b5cf6cc','#7c3aedcc','#6d28d9cc','#5b21b6cc','#4c1d95cc','#a78bfaaa','#8b5cf6aa','#7c3aedaa'];
+const PALETTE_GREEN  = ['#34d399','#10b981','#059669','#047857','#065f46','#064e3b','#34d399cc','#10b981cc','#059669cc','#047857cc','#065f46cc','#064e3bcc','#34d399aa','#10b981aa','#059669aa'];
+const PALETTE_MIX    = [...PALETTE_BLUE.slice(0,5), ...PALETTE_PURPLE.slice(0,5), ...PALETTE_GREEN.slice(0,5)];
+
+// Chart.js global defaults
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = '#334155';
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+
+// ══════════════════════════════════════════════
+// EXCEL PARSING
+// ══════════════════════════════════════════════
+function excelDateToDate(v) {
+  if (!v) return null;
+  if (typeof v === 'number') {
+    const d = new Date((v - 25569) * 86400 * 1000);
+    return d;
+  }
+  const d = new Date(v);
+  return isNaN(d) ? null : d;
+}
+
+function formatDate(d) {
+  if (!d) return '';
+  return d.toLocaleDateString('es-DO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function formatDateISO(d) {
+  if (!d) return '';
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+function cleanPiloto(raw) {
+  if (!raw) return '—';
+  const str = String(raw);
+  const parts = str.split('|');
+  return parts[0].trim() || str.trim();
+}
+
+function parseExcel(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const sheetName = wb.SheetNames[0];
+        const ws = wb.Sheets[sheetName];
+        const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+        const data = raw.map(row => {
+          // Try multiple possible column name formats
+          const fecha = row['Fecha de envio'] || row['Fecha de envío'] || row['Fecha'] || '';
+          const provincia = (row['Provincia receptora'] || row['Provincia'] || '').toString().trim();
+          const punto = (row['Punto de entrega'] || row['Punto'] || '').toString().trim();
+          const puesto = (row['Nombre del puesto'] || row['Puesto'] || '').toString().trim();
+          const pilotoRaw = (row['A quien liquidar'] || row['A quién liquidar'] || row['Piloto'] || '').toString();
+          const asignadoRaw  = row['Importe de la entrega'] || row['Importe'] || 0;
+          const entregadoRaw = row['ENTREGADO'] || row['Entregado'] || row['entregado'] || 0;
+          const pctRaw       = row['%'] || 0;
+          const totalDiaRaw  = row['TOTAL DEL DIA'] || row['Total del dia'] || 0;
+
+          const asignado  = parseFloat(asignadoRaw)  || 0;
+          const entregado = parseFloat(entregadoRaw) || 0;
+
+          return {
+            fecha: excelDateToDate(fecha),
+            fechaISO: formatDateISO(excelDateToDate(fecha)),
+            provincia: provincia || 'Sin especificar',
+            punto: punto || 'Sin especificar',
+            puesto: puesto || 'Sin especificar',
+            piloto: cleanPiloto(pilotoRaw),
+            asignado,
+            entregado,
+            pendiente: Math.max(0, asignado - entregado),
+            efectividad: asignado > 0 ? (entregado / asignado) * 100 : 0,
+            totalDia: parseFloat(totalDiaRaw) || 0
+          };
+        }).filter(r => r.provincia !== 'Sin especificar' || r.piloto !== '—');
+
+        resolve(data);
+      } catch (err) {
+        reject(err);
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ══════════════════════════════════════════════
+// UPLOAD / DRAG & DROP
+// ══════════════════════════════════════════════
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+
+dropZone.addEventListener('dragleave', () => {
+  dropZone.classList.remove('drag-over');
+});
+
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+
+async function handleFile(file) {
+  const errEl = document.getElementById('upload-error');
+  errEl.style.display = 'none';
+
+  if (!file.name.match(/\.(xlsx|xls)$/i)) {
+    errEl.textContent = 'Solo se aceptan archivos .xlsx o .xls';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    const data = await parseExcel(file);
+    if (data.length === 0) {
+      errEl.textContent = 'No se encontraron datos en el archivo.';
+      errEl.style.display = 'block';
+      return;
+    }
+    window.DATA = data;
+    initDashboard(data);
+  } catch (err) {
+    errEl.textContent = 'Error al leer el archivo: ' + err.message;
+    errEl.style.display = 'block';
+  }
+}
+
+function initDashboard(data) {
+  populateFilters(data);
+  document.getElementById('upload-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'flex';
+  applyFilters();
+}
+
+// ══════════════════════════════════════════════
+// FILTERS
+// ══════════════════════════════════════════════
+function populateFilters(data) {
+  const provincias = [...new Set(data.map(r => r.provincia))].sort();
+  const pilotos    = [...new Set(data.map(r => r.piloto))].sort();
+  const puntos     = [...new Set(data.map(r => r.punto))].sort();
+
+  setSelectOptions('f-provincia', provincias);
+  setSelectOptions('f-piloto', pilotos);
+  setSelectOptions('f-punto', puntos);
+
+  const fechas = data.map(r => r.fechaISO).filter(Boolean).sort();
+  if (fechas.length) {
+    document.getElementById('f-desde').min = fechas[0];
+    document.getElementById('f-desde').max = fechas[fechas.length - 1];
+    document.getElementById('f-hasta').min = fechas[0];
+    document.getElementById('f-hasta').max = fechas[fechas.length - 1];
+  }
+}
+
+function setSelectOptions(id, values) {
+  const sel = document.getElementById(id);
+  const current = sel.value;
+  while (sel.options.length > 1) sel.remove(1);
+  values.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    sel.appendChild(opt);
+  });
+  sel.value = current || '';
+}
+
+function applyFilters() {
+  const desde    = document.getElementById('f-desde').value;
+  const hasta    = document.getElementById('f-hasta').value;
+  const provincia = document.getElementById('f-provincia').value;
+  const piloto   = document.getElementById('f-piloto').value;
+  const punto    = document.getElementById('f-punto').value;
+
+  let data = window.DATA;
+
+  if (desde)    data = data.filter(r => r.fechaISO >= desde);
+  if (hasta)    data = data.filter(r => r.fechaISO <= hasta);
+  if (provincia) data = data.filter(r => r.provincia === provincia);
+  if (piloto)   data = data.filter(r => r.piloto === piloto);
+  if (punto)    data = data.filter(r => r.punto === punto);
+
+  renderAll(data);
+}
+
+function clearFilters() {
+  document.getElementById('f-desde').value = '';
+  document.getElementById('f-hasta').value = '';
+  document.getElementById('f-provincia').value = '';
+  document.getElementById('f-piloto').value = '';
+  document.getElementById('f-punto').value = '';
+  applyFilters();
+}
+
+// ══════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+// RENDER ALL
+// ══════════════════════════════════════════════
+function renderAll(data) {
+  renderResumen(data);
+  renderProvincias(data);
+  renderPilotos(data);
+  renderPuntos(data);
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function groupBy(data, key, valKey) {
+  const map = {};
+  data.forEach(r => {
+    const k = r[key] || 'Sin especificar';
+    if (!map[k]) map[k] = { count: 0, total: 0 };
+    map[k].count++;
+    map[k].total += valKey ? r[valKey] : 0;
+  });
+  return Object.entries(map)
+    .map(([k, v]) => ({ name: k, count: v.count, total: v.total }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function makeChart(id, config) {
+  if (charts[id]) charts[id].destroy();
+  const ctx = document.getElementById(id).getContext('2d');
+  charts[id] = new Chart(ctx, config);
+}
+
+function barConfig(labels, values, color, label, horizontal = true) {
+  return {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label, data: values, backgroundColor: color, borderRadius: 4, borderSkipped: false }]
+    },
+    options: {
+      indexAxis: horizontal ? 'y' : 'x',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
+      }
+    }
+  };
+}
+
+// ══════════════════════════════════════════════
+// TAB RESUMEN
+// ══════════════════════════════════════════════
+function renderResumen(data) {
+  const totalAsignado  = data.reduce((s, r) => s + r.asignado, 0);
+  const totalEntregado = data.reduce((s, r) => s + r.entregado, 0);
+  const totalPendiente = data.reduce((s, r) => s + r.pendiente, 0);
+  const efectividad    = totalAsignado > 0 ? (totalEntregado / totalAsignado * 100).toFixed(1) : '0.0';
+
+  document.getElementById('kpi-asignados').textContent   = totalAsignado.toLocaleString('es-DO');
+  document.getElementById('kpi-entregados').textContent  = totalEntregado.toLocaleString('es-DO');
+  document.getElementById('kpi-pendientes').textContent  = totalPendiente.toLocaleString('es-DO');
+  document.getElementById('kpi-efectividad').textContent = efectividad + '%';
+  document.getElementById('kpi-pilotos').textContent     = new Set(data.map(r => r.piloto)).size;
+
+  // Línea — Asignado vs Entregado por fecha
+  const byDate = {};
+  data.forEach(r => {
+    if (r.fechaISO) {
+      if (!byDate[r.fechaISO]) byDate[r.fechaISO] = { asignado: 0, entregado: 0 };
+      byDate[r.fechaISO].asignado  += r.asignado;
+      byDate[r.fechaISO].entregado += r.entregado;
+    }
+  });
+  const dateEntries = Object.entries(byDate).sort(([a], [b]) => a.localeCompare(b));
+  const dateLabels  = dateEntries.map(([d]) => { const [y, m, dd] = d.split('-'); return `${dd}/${m}`; });
+
+  if (charts['chart-linea']) charts['chart-linea'].destroy();
+  const ctxL = document.getElementById('chart-linea').getContext('2d');
+  charts['chart-linea'] = new Chart(ctxL, {
+    type: 'line',
+    data: {
+      labels: dateLabels,
+      datasets: [
+        {
+          label: 'Asignados',
+          data: dateEntries.map(([, v]) => v.asignado),
+          borderColor: '#38bdf8',
+          backgroundColor: 'rgba(56,189,248,0.15)',
+          borderWidth: 2,
+          pointBackgroundColor: '#38bdf8',
+          pointRadius: 4,
+          fill: true,
+          tension: 0.3
+        },
+        {
+          label: 'Entregados',
+          data: dateEntries.map(([, v]) => v.entregado),
+          borderColor: '#34d399',
+          backgroundColor: 'rgba(52,211,153,0.15)',
+          borderWidth: 2,
+          pointBackgroundColor: '#34d399',
+          pointRadius: 4,
+          fill: true,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12 } }
+      },
+      scales: {
+        x: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 11 } } },
+        y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 11 } } }
+      }
+    }
+  });
+
+  // Dona — Distribución por provincia
+  const provData = groupBy(data, 'provincia');
+  const topProv  = provData.slice(0, 10);
+
+  if (charts['chart-dona']) charts['chart-dona'].destroy();
+  const ctxD = document.getElementById('chart-dona').getContext('2d');
+  charts['chart-dona'] = new Chart(ctxD, {
+    type: 'doughnut',
+    data: {
+      labels: topProv.map(p => p.name),
+      datasets: [{
+        data: topProv.map(p => p.count),
+        backgroundColor: PALETTE_MIX,
+        borderWidth: 2,
+        borderColor: '#1e293b'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12, padding: 8 }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+              const pct = ((ctx.parsed / total) * 100).toFixed(1);
+              return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+// TAB PROVINCIAS
+// ══════════════════════════════════════════════
+function groupByFull(data, key) {
+  const map = {};
+  data.forEach(r => {
+    const k = r[key] || 'Sin especificar';
+    if (!map[k]) map[k] = { asignado: 0, entregado: 0, pendiente: 0, count: 0 };
+    map[k].asignado  += r.asignado;
+    map[k].entregado += r.entregado;
+    map[k].pendiente += r.pendiente;
+    map[k].count++;
+  });
+  return Object.entries(map)
+    .map(([k, v]) => ({
+      name: k,
+      ...v,
+      efectividad: v.asignado > 0 ? (v.entregado / v.asignado * 100).toFixed(1) : '0.0'
+    }))
+    .sort((a, b) => b.asignado - a.asignado);
+}
+
+function renderProvincias(data) {
+  const groups = groupByFull(data, 'provincia');
+  const labels = groups.map(g => g.name);
+
+  // Barras agrupadas: Asignado vs Entregado
+  if (charts['chart-prov-entregas']) charts['chart-prov-entregas'].destroy();
+  const ctxA = document.getElementById('chart-prov-entregas').getContext('2d');
+  charts['chart-prov-entregas'] = new Chart(ctxA, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Asignados',  data: groups.map(g => g.asignado),  backgroundColor: '#38bdf8', borderRadius: 4 },
+        { label: 'Entregados', data: groups.map(g => g.entregado), backgroundColor: '#34d399', borderRadius: 4 }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12 } } },
+      scales: {
+        x: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
+      }
+    }
+  });
+
+  // Barras: % Efectividad por provincia
+  if (charts['chart-prov-importe']) charts['chart-prov-importe'].destroy();
+  const ctxE = document.getElementById('chart-prov-importe').getContext('2d');
+  charts['chart-prov-importe'] = new Chart(ctxE, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: '% Efectividad',
+        data: groups.map(g => parseFloat(g.efectividad)),
+        backgroundColor: groups.map(g => parseFloat(g.efectividad) >= 80 ? '#34d399' : parseFloat(g.efectividad) >= 50 ? '#f59e0b' : '#f87171'),
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { max: 100, grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 11 }, callback: v => v + '%' } },
+        y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
+      }
+    }
+  });
+
+  const tbody = document.getElementById('tbody-provincias');
+  if (groups.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="no-data">Sin datos</td></tr>';
+    return;
+  }
+  tbody.innerHTML = groups.map((g, i) => {
+    const pct = parseFloat(g.efectividad);
+    const badge = pct >= 80 ? 'badge-green' : pct >= 50 ? 'badge-amber' : 'badge-red';
+    return `
+      <tr>
+        <td class="text-muted font-mono">${i + 1}</td>
+        <td>${g.name}</td>
+        <td class="text-right font-mono">${g.asignado.toLocaleString('es-DO')}</td>
+        <td class="text-right font-mono">${g.entregado.toLocaleString('es-DO')}</td>
+        <td class="text-right font-mono">${g.pendiente.toLocaleString('es-DO')}</td>
+        <td class="text-right"><span class="badge ${badge}">${g.efectividad}%</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// TAB PILOTOS
+// ══════════════════════════════════════════════
+function renderPilotos(data) {
+  const groups = groupByFull(data, 'piloto');
+  const top    = groups.slice(0, 10);
+  const labels = top.map(g => g.name.length > 22 ? g.name.slice(0, 22) + '…' : g.name);
+
+  // Barras agrupadas: Asignado vs Entregado
+  if (charts['chart-pilot-entregas']) charts['chart-pilot-entregas'].destroy();
+  const ctxA = document.getElementById('chart-pilot-entregas').getContext('2d');
+  charts['chart-pilot-entregas'] = new Chart(ctxA, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Asignados',  data: top.map(g => g.asignado),  backgroundColor: '#38bdf8', borderRadius: 4 },
+        { label: 'Entregados', data: top.map(g => g.entregado), backgroundColor: '#34d399', borderRadius: 4 }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12 } } },
+      scales: {
+        x: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
+      }
+    }
+  });
+
+  // Barras: % Efectividad por piloto
+  if (charts['chart-pilot-importe']) charts['chart-pilot-importe'].destroy();
+  const ctxE = document.getElementById('chart-pilot-importe').getContext('2d');
+  charts['chart-pilot-importe'] = new Chart(ctxE, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: '% Efectividad',
+        data: top.map(g => parseFloat(g.efectividad)),
+        backgroundColor: top.map(g => parseFloat(g.efectividad) >= 80 ? '#34d399' : parseFloat(g.efectividad) >= 50 ? '#f59e0b' : '#f87171'),
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { max: 100, grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 11 }, callback: v => v + '%' } },
+        y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
+      }
+    }
+  });
+
+  const tbody = document.getElementById('tbody-pilotos');
+  if (groups.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="no-data">Sin datos</td></tr>';
+    return;
+  }
+  tbody.innerHTML = groups.map((g, i) => {
+    const provinciasCount = new Set(data.filter(r => r.piloto === g.name).map(r => r.provincia)).size;
+    const pct = parseFloat(g.efectividad);
+    const badge = pct >= 80 ? 'badge-green' : pct >= 50 ? 'badge-amber' : 'badge-red';
+    return `
+      <tr>
+        <td class="text-muted font-mono">${i + 1}</td>
+        <td>${g.name}</td>
+        <td class="text-right font-mono">${g.asignado.toLocaleString('es-DO')}</td>
+        <td class="text-right font-mono">${g.entregado.toLocaleString('es-DO')}</td>
+        <td class="text-right font-mono">${g.pendiente.toLocaleString('es-DO')}</td>
+        <td class="text-right"><span class="badge ${badge}">${g.efectividad}%</span></td>
+        <td class="text-right"><span class="badge badge-purple">${provinciasCount}</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// TAB PUNTOS DE ENTREGA
+// ══════════════════════════════════════════════
+function renderPuntos(data) {
+  const groups = groupByFull(data, 'punto');
+  const top    = groups.slice(0, 15);
+  const labels = top.map(g => g.name.length > 18 ? g.name.slice(0, 18) + '…' : g.name);
+
+  if (charts['chart-puntos']) charts['chart-puntos'].destroy();
+  const ctxP = document.getElementById('chart-puntos').getContext('2d');
+  charts['chart-puntos'] = new Chart(ctxP, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Asignados',  data: top.map(g => g.asignado),  backgroundColor: '#38bdf8', borderRadius: 4 },
+        { label: 'Entregados', data: top.map(g => g.entregado), backgroundColor: '#34d399', borderRadius: 4 }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12 } } },
+      scales: {
+        x: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
+      }
+    }
+  });
+
+  const tbody = document.getElementById('tbody-puntos');
+  if (groups.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="no-data">Sin datos</td></tr>';
+    return;
+  }
+  tbody.innerHTML = groups.map((g, i) => {
+    const prov = data.find(r => r.punto === g.name)?.provincia || '—';
+    const pct  = parseFloat(g.efectividad);
+    const badge = pct >= 80 ? 'badge-green' : pct >= 50 ? 'badge-amber' : 'badge-red';
+    return `
+      <tr>
+        <td class="text-muted font-mono">${i + 1}</td>
+        <td class="font-mono" style="font-size:12px">${g.name}</td>
+        <td class="text-muted">${prov}</td>
+        <td class="text-right font-mono">${g.asignado.toLocaleString('es-DO')}</td>
+        <td class="text-right font-mono">${g.entregado.toLocaleString('es-DO')}</td>
+        <td class="text-right"><span class="badge ${badge}">${g.efectividad}%</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// RESET
+// ══════════════════════════════════════════════
+function resetApp() {
+  Object.values(charts).forEach(c => { if (c) c.destroy(); });
+  Object.keys(charts).forEach(k => delete charts[k]);
+  window.DATA = [];
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('upload-screen').style.display = 'flex';
+  document.getElementById('file-input').value = '';
+  // Reset tabs (scoped to #dashboard only)
+  const dash = document.getElementById('dashboard');
+  dash.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  dash.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-resumen').classList.add('active');
+  dash.querySelector('.tab-btn').classList.add('active');
+}
+
+// Fix PALETTE_AMBER reference
+const PALETTE_AMBER = ['#f59e0b','#d97706','#b45309','#92400e','#78350f','#f59e0bcc','#d97706cc','#b45309cc','#92400ecc','#78350fcc','#f59e0baa','#d97706aa','#b45309aa','#92400eaa','#78350faa'];
+
+// ══════════════════════════════════════════════
+// MULTI-DASHBOARD STATE
+// ══════════════════════════════════════════════
+window.DATA_DIARIA    = [];
+window.DATA_ALMACEN   = [];
+window.DATA_OPERACION = [];
+const chartsD = {}; // operacion diaria
+const chartsA = {}; // almacen
+const chartsO = {}; // totalidad operacion
+
+function mkChart(reg, id, cfg) {
+  if (reg[id]) reg[id].destroy();
+  reg[id] = new Chart(document.getElementById(id).getContext('2d'), cfg);
+}
+function lineOpts(extra) {
+  return Object.assign({ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:'#94a3b8', font:{size:11}, boxWidth:12 } } }, scales:{ x:{ grid:{color:'#1e293b'}, ticks:{color:'#64748b',font:{size:11}} }, y:{ grid:{color:'#1e293b'}, ticks:{color:'#64748b',font:{size:11}} } } }, extra||{});
+}
+function hbarOpts(extra) {
+  return Object.assign({ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:'#94a3b8', font:{size:11}, boxWidth:12 } } }, scales:{ x:{ grid:{color:'#1e293b'}, ticks:{color:'#64748b',font:{size:11}} }, y:{ grid:{display:false}, ticks:{color:'#94a3b8',font:{size:11}} } } }, extra||{});
+}
+function pct(v) { return (v*100).toFixed(1)+'%'; }
+
+// ── HELPERS MULTI-DASH ──
+function closeDash(dashId) {
+  document.getElementById(dashId).style.display = 'none';
+  document.getElementById('upload-screen').style.display = 'flex';
+}
+function switchTabD(prefix, name, ev) {
+  document.querySelectorAll('#dash-' + prefix + ' .tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#dash-' + prefix + ' .tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(prefix + '-tab-' + name).classList.add('active');
+  if (ev && ev.currentTarget) ev.currentTarget.classList.add('active');
+}
+function setText(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
+function n(v) { return Number(v||0).toLocaleString('es-DO'); }
+function r(v,d) { return typeof v==='number'?v.toFixed(d||1):v; }
+
+// ══════════════════════════════════════════════
+// PARSE: OPERACION DIARIA  (T+0…T+7 completo)
+// ══════════════════════════════════════════════
+function parseExcelDiaria(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb  = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const ws  = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        const f = v => parseFloat(v||0)||0;
+        const data = raw.map(row => {
+          const fecha     = row['Fecha de envio'] || row['Fecha de envío'] || '';
+          const provincia = (row['Provincia receptora'] || '').toString().trim();
+          const punto     = (row['Punto de entrega'] || '').toString().trim();
+          const pilotoRaw = (row['A quien liquidar'] || row['A quién liquidar'] || '').toString();
+          const d = excelDateToDate(fecha);
+          return {
+            fecha: d, fechaISO: formatDateISO(d),
+            provincia: provincia || 'Sin especificar',
+            punto:     punto     || 'Sin especificar',
+            piloto:    cleanPiloto(pilotoRaw),
+            asignado:       f(row['Importe de la entrega']),
+            firmados:       f(row['签收-总票数']),
+            noFirmados:     f(row['未签收-总票数']),
+            problematicos:  f(row['未签收-问题件']),
+            devolucion:     f(row['No firmado - devolución']),
+            enAlmacen:      f(row['未签收-留仓件入仓']),
+            // velocidad T+N (firmados por día de tránsito)
+            firT0:  f(row['签收-当日签收票数T']),
+            firT1:  f(row['签收-T+1签收票数']),
+            firT2:  f(row['签收-T+2签收票数']),
+            firT34: f(row['签收-T+3到T+4签收票数']),
+            firT56: f(row['签收-T+5到T+6签收票数']),
+            firT7p: f(row['签收->=T+7签收票数']),
+            // antigüedad pendientes no firmados
+            nfT0:   f(row['未签收-T日未签收']),
+            nfT1:   f(row['未签收-T+1未签收']),
+            nfT2:   f(row['未签收-T+2未签收']),
+            nfT34:  f(row['未签收-T+3到T+4未签收']),
+            nfT56:  f(row['未签收-T+5到T+6未签收']),
+            nfT7p:  f(row['未签收->=T+7未签收']),
+          };
+        }).filter(r => r.provincia !== 'Sin especificar');
+        resolve(data);
+      } catch (err) { reject(err); }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ══════════════════════════════════════════════
+// PARSE: TOTAL SALIDA DEL ALMACEN  (pipeline completo)
+// ══════════════════════════════════════════════
+function parseExcelAlmacen(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb  = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const ws  = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        const f = v => parseFloat(v||0)||0;
+        const data = raw.map(row => {
+          const fecha     = row['Fecha de creación'] || row['Fecha de creacion'] || '';
+          const provincia = (row['Provincia de destino'] || '').toString().trim();
+          const ciudad    = (row['Ciudad de destino'] || '').toString().trim();
+          const pdv       = (row['PDV de destino'] || '').toString().trim();
+          const d = excelDateToDate(fecha);
+          return {
+            fecha: d, fechaISO: formatDateISO(d),
+            provincia: provincia || 'Sin especificar',
+            ciudad:    ciudad    || '',
+            pdv:       pdv       || 'Sin especificar',
+            enviadas:       f(row['N° de guías enviadas']),
+            llegada:        f(row['N° de guías de llegada']),
+            sinLlegada:     f(row['Enviado, sin llegada']),      // en tránsito
+            enRuta:         f(row['N° de paquetes en ruta']),
+            sinSalida:      f(row['Llegó pero no ha salido a ruta'] || row['Llego pero no ha salido a ruta']),  // atascados en hub
+            firmadas:       f(row['N° de guías firmadas']),
+            despachSinFirma:f(row['有派未签票数']),               // despachado sin firma
+            retenidos:      f(row['N° de paquetes retenidos']),
+            anormales:      f(row['N° de guías anormales']),
+            devueltos:      f(row['N° de paquetes devueltos']),
+            sinCerrar:      f(row['Total no cerrado en circulación'] || row['Total no cerrado en circulacion']),
+          };
+        }).filter(r => r.provincia !== 'Sin especificar');
+        resolve(data);
+      } catch (err) { reject(err); }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ══════════════════════════════════════════════
+// PARSE: TOTALIDAD DE OPERACION  (T+0…T+7 + tipo negocio)
+// ══════════════════════════════════════════════
+function parseExcelOperacion(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb  = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const ws  = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        const f = v => parseFloat(v||0)||0;
+        const data = raw.map(row => {
+          const fecha      = row['Fecha de recepción planificada'] || row['Fecha de recepcion planificada'] || '';
+          const provincia  = (row['Provincia de destino'] || '').toString().trim();
+          const pdv        = (row['PDV de destino'] || '').toString().trim();
+          const tipoNeg    = (row['Tipo de negocio'] || 'Desconocido').toString().trim();
+          const d = excelDateToDate(fecha);
+          return {
+            fecha: d, fechaISO: formatDateISO(d),
+            provincia: provincia || 'Sin especificar',
+            pdv:       pdv       || 'Sin especificar',
+            tipoNeg,
+            volumen:         f(row['Volumen de envío'] || row['Volumen de envio']),
+            evaluar:         f(row['Cant. a evaluar']),
+            llegada:         f(row['Cantidad de llegada']),
+            sinLlegada:      f(row['Enviado, sin llegada']),
+            enRuta:          f(row['Paquetes en Rutados']),
+            sinSalida:       f(row['Llegó pero no ha salido a ruta'] || row['Llego pero no ha salido a ruta']),
+            firmados:        f(row['Paquetes firmados']),
+            tasa:            f(row['Tasa de recepción'] || row['Tasa de recepcion']),
+            enRutaSinFirma:  f(row['En ruta, sin firma']),
+            noFirmados:      f(row['Cantidad de Paquetes no Firmados']),
+            problematicos:   f(row['Paquetes problemáticos y no Firmados'] || row['Paquetes problematicos y no Firmados']),
+            noProblematicos: f(row['Paquetes no Problemáticos y no Firmados'] || row['Paquetes no Problematicos y no Firmados']),
+            // curva T+0 → T+7 (volúmenes ACUMULADOS por día de tránsito)
+            cumT0: f(row['Volumen de paquetes firmados en T+0']),
+            cumT1: f(row['Volumen de paquetes firmados en T+1']),
+            cumT2: f(row['Volumen de paquetes firmados en T+2']),
+            cumT3: f(row['Volumen de paquetes firmados en T+3']),
+            cumT4: f(row['Volumen de paquetes firmados en T+4']),
+            cumT5: f(row['T+5签收量']),
+            cumT6: f(row['T+6签收量']),
+            cumT7: f(row['T+7签收量']),
+            tasaT0: f(row['Tasa de paquetes firmados en T+0']),
+            tasaT1: f(row['Tasa de paquetes firmados en T+1']),
+            tasaT2: f(row['Tasa de paquetes firmados en T+2']),
+            tasaT3: f(row['Tasa de paquetes firmados en T+3']),
+            tasaT4: f(row['Tasa de paquetes firmados en T+4']),
+          };
+        }).filter(r => r.provincia !== 'Sin especificar');
+        resolve(data);
+      } catch (err) { reject(err); }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ══════════════════════════════════════════════
+// UPLOAD HANDLER GENÉRICO PARA NUEVAS TARJETAS
+// ══════════════════════════════════════════════
+function setupNewCard(dropId, inputId, statusId, errId, parseFn, dashId, dataVar, initFn) {
+  const dz = document.getElementById(dropId);
+  const fi = document.getElementById(inputId);
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) handleNewFile(e.dataTransfer.files[0], statusId, errId, parseFn, dashId, dataVar, initFn);
+  });
+  fi.addEventListener('change', () => {
+    if (fi.files[0]) handleNewFile(fi.files[0], statusId, errId, parseFn, dashId, dataVar, initFn);
+  });
+}
+
+async function handleNewFile(file, statusId, errId, parseFn, dashId, dataVar, initFn) {
+  const statusEl = document.getElementById(statusId);
+  const errEl    = document.getElementById(errId);
+  statusEl.textContent = '';
+  errEl.textContent = '';
+  if (!file.name.match(/\.(xlsx|xls)$/i)) { errEl.textContent = 'Solo .xlsx o .xls'; return; }
+  statusEl.textContent = '⏳ Cargando...';
+  try {
+    const data = await parseFn(file);
+    if (data.length === 0) { statusEl.textContent = ''; errEl.textContent = 'Sin datos válidos.'; return; }
+    window[dataVar] = data;
+    statusEl.textContent = '✓ ' + data.length + ' registros';
+    initFn(data);
+  } catch (err) {
+    statusEl.textContent = '';
+    errEl.textContent = 'Error: ' + err.message;
+  }
+}
+
+// ══════════════════════════════════════════════
+// OPERACION DIARIA — INIT / FILTERS / RENDER
+// ══════════════════════════════════════════════
+function initDiaria(data) {
+  setSelectOptions('d-provincia', [...new Set(data.map(r=>r.provincia))].sort());
+  setSelectOptions('d-piloto',    [...new Set(data.map(r=>r.piloto))].sort());
+  document.getElementById('upload-screen').style.display = 'none';
+  document.getElementById('dash-diaria').style.display = 'flex';
+  applyDiariaFilters();
+}
+function applyDiariaFilters() {
+  let data = window.DATA_DIARIA;
+  const desde=document.getElementById('d-desde').value, hasta=document.getElementById('d-hasta').value;
+  const prov=document.getElementById('d-provincia').value, piloto=document.getElementById('d-piloto').value;
+  if(desde) data=data.filter(r=>r.fechaISO>=desde);
+  if(hasta) data=data.filter(r=>r.fechaISO<=hasta);
+  if(prov)  data=data.filter(r=>r.provincia===prov);
+  if(piloto)data=data.filter(r=>r.piloto===piloto);
+  renderDiariaAll(data);
+}
+function clearDiariaFilters() {
+  ['d-desde','d-hasta','d-provincia','d-piloto'].forEach(id=>document.getElementById(id).value='');
+  applyDiariaFilters();
+}
+function renderDiariaAll(data) {
+  renderDiariaResumen(data);
+  renderDiariaVelocidad(data);
+  renderDiariaPilotos(data);
+  renderDiariaPuntos(data);
+}
+
+function renderDiariaResumen(data) {
+  const S = (key) => data.reduce((s,r)=>s+r[key],0);
+  const totA=S('asignado'), totF=S('firmados'), totNF=S('noFirmados'), totP=S('problematicos');
+  const tasa = totA>0?(totF/totA*100).toFixed(1):'0.0';
+  setText('d-kpi-asignados',    n(totA));
+  setText('d-kpi-firmados',     n(totF));
+  setText('d-kpi-nofirmados',   n(totNF));
+  setText('d-kpi-problematicos',n(totP));
+  setText('d-kpi-tasa',         tasa+'%');
+
+  // Línea: asignados vs firmados por fecha
+  const bd={};
+  data.forEach(r=>{ if(r.fechaISO){if(!bd[r.fechaISO])bd[r.fechaISO]={a:0,f:0}; bd[r.fechaISO].a+=r.asignado; bd[r.fechaISO].f+=r.firmados;} });
+  const de=Object.entries(bd).sort(([a],[b])=>a.localeCompare(b));
+  const dl=de.map(([d])=>{const[,m,dd]=d.split('-');return`${dd}/${m}`;});
+  mkChart(chartsD,'d-chart-linea',{ type:'line', data:{ labels:dl, datasets:[
+    {label:'Asignados',data:de.map(([,v])=>v.a),borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,0.15)',borderWidth:2,pointRadius:4,fill:true,tension:0.3},
+    {label:'Firmados', data:de.map(([,v])=>v.f),borderColor:'#34d399',backgroundColor:'rgba(52,211,153,0.15)', borderWidth:2,pointRadius:4,fill:true,tension:0.3}
+  ]}, options:lineOpts()});
+
+  // Doughnut: ¿Por qué no se entregó?
+  const totDev=S('devolucion'), totAlm=S('enAlmacen');
+  const otrosNF = Math.max(0, totNF - totP - totDev - totAlm);
+  mkChart(chartsD,'d-chart-noentrega',{ type:'doughnut',
+    data:{ labels:['Problemáticos','Devolución','Retenidos en Almacén','Pendientes normales'],
+           datasets:[{data:[totP,totDev,totAlm,otrosNF], backgroundColor:['#f87171','#f59e0b','#a78bfa','#64748b'], borderWidth:2, borderColor:'#1e293b'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11},boxWidth:12,padding:8}}}}
+  });
+}
+
+function renderDiariaVelocidad(data) {
+  const S = (key) => data.reduce((s,r)=>s+r[key],0);
+  const totF=S('firmados');
+  const t0=S('firT0'), t1=S('firT1'), t2=S('firT2'), t34=S('firT34'), t56=S('firT56'), t7=S('firT7p');
+  const safePct = (v,tot) => tot>0?((v/tot)*100).toFixed(1)+'%':'—';
+
+  setText('d-vel-t0',    safePct(t0,totF));
+  setText('d-vel-t1',    safePct(t0+t1,totF));
+  setText('d-vel-t2',    safePct(t0+t1+t2,totF));
+  setText('d-vel-t3plus',safePct(t34+t56+t7,totF));
+
+  // Bar: firmados por tramo T+N
+  mkChart(chartsD,'d-chart-speed-bar',{ type:'bar',
+    data:{ labels:['T+0 (hoy)','T+1','T+2','T+3 a T+4','T+5 a T+6','T+7 o más'],
+           datasets:[{label:'Paquetes firmados',
+             data:[t0,t1,t2,t34,t56,t7],
+             backgroundColor:['#34d399','#38bdf8','#60a5fa','#a78bfa','#f59e0b','#f87171'],
+             borderRadius:6}]},
+    options:{ responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
+        const pct=totF>0?((ctx.parsed.y/totF)*100).toFixed(1):'0';
+        return ` ${ctx.parsed.y.toLocaleString('es-DO')} paq. (${pct}% del total firmado)`;
+      }}}},
+      scales:{x:{grid:{color:'#1e293b'},ticks:{color:'#94a3b8',font:{size:11}}},
+              y:{grid:{color:'#1e293b'},ticks:{color:'#64748b',font:{size:11}}}}}
+  });
+
+  // Bar: antigüedad de no firmados
+  const nf0=S('nfT0'),nf1=S('nfT1'),nf2=S('nfT2'),nf34=S('nfT34'),nf56=S('nfT56'),nf7=S('nfT7p');
+  mkChart(chartsD,'d-chart-aging',{ type:'bar',
+    data:{ labels:['Ingresó hoy','1 día','2 días','3–4 días','5–6 días','7+ días'],
+           datasets:[{label:'No firmados',
+             data:[nf0,nf1,nf2,nf34,nf56,nf7],
+             backgroundColor:['#34d399','#f59e0b','#f59e0b','#f87171','#f87171','#ef4444'],
+             borderRadius:6}]},
+    options:{ responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:'#1e293b'},ticks:{color:'#94a3b8',font:{size:11}}},
+              y:{grid:{color:'#1e293b'},ticks:{color:'#64748b',font:{size:11}}}}}
+  });
+
+  // Insight box
+  const masRapido = t0>0 ? `${safePct(t0,totF)} entregado el mismo día` : 'Sin datos T+0';
+  const rezagados = t56+t7;
+  const box = document.getElementById('d-insight-box');
+  if(box) box.innerHTML = `
+    <div class="insight-item"><span class="insight-label">Índice de velocidad</span><span class="insight-val" style="color:var(--green)">${safePct(t0+t1,totF)}</span></div>
+    <div style="color:var(--border);font-size:20px">|</div>
+    <div class="insight-item"><span class="insight-label">Entregados mismo día (T+0)</span><span class="insight-val" style="color:var(--purple)">${masRapido}</span></div>
+    <div style="color:var(--border);font-size:20px">|</div>
+    <div class="insight-item"><span class="insight-label">Rezagados (T+5 o más)</span><span class="insight-val" style="color:var(--red)">${n(rezagados)} paq.</span></div>
+    <div style="color:var(--border);font-size:20px">|</div>
+    <div class="insight-item"><span class="insight-label">Total pendientes</span><span class="insight-val" style="color:var(--amber)">${n(S('noFirmados'))} paq.</span></div>`;
+}
+
+function renderDiariaPilotos(data) {
+  const map={};
+  data.forEach(r=>{
+    if(!map[r.piloto])map[r.piloto]={asignado:0,firmados:0,noFirmados:0,problematicos:0,devolucion:0,enAlmacen:0,firT0:0};
+    const m=map[r.piloto];
+    m.asignado+=r.asignado; m.firmados+=r.firmados; m.noFirmados+=r.noFirmados;
+    m.problematicos+=r.problematicos; m.devolucion+=r.devolucion; m.enAlmacen+=r.enAlmacen; m.firT0+=r.firT0;
+  });
+  const groups=Object.entries(map).map(([k,v])=>({name:k,...v,
+    tasa:v.asignado>0?(v.firmados/v.asignado*100).toFixed(1):'0.0'})).sort((a,b)=>b.asignado-a.asignado);
+  const top=groups.slice(0,10);
+  const lbl=top.map(g=>g.name.length>20?g.name.slice(0,20)+'…':g.name);
+
+  mkChart(chartsD,'d-chart-pilot-bar',{type:'bar', data:{labels:lbl, datasets:[
+    {label:'Asignados',data:top.map(g=>g.asignado), backgroundColor:'#a78bfa',borderRadius:4},
+    {label:'Firmados', data:top.map(g=>g.firmados),  backgroundColor:'#34d399',borderRadius:4},
+    {label:'T+0 (hoy)',data:top.map(g=>g.firT0),     backgroundColor:'#38bdf8',borderRadius:4}
+  ]}, options:hbarOpts()});
+
+  mkChart(chartsD,'d-chart-pilot-prob',{type:'bar', data:{labels:lbl, datasets:[
+    {label:'Problemáticos',data:top.map(g=>g.problematicos),backgroundColor:'#f87171',borderRadius:4},
+    {label:'Devolución',   data:top.map(g=>g.devolucion),    backgroundColor:'#f59e0b',borderRadius:4},
+    {label:'En Almacén',   data:top.map(g=>g.enAlmacen),     backgroundColor:'#a78bfa',borderRadius:4}
+  ]}, options:hbarOpts()});
+
+  const tbody=document.getElementById('d-tbody-pilotos');
+  if(!groups.length){tbody.innerHTML='<tr><td colspan="10" class="no-data">Sin datos</td></tr>';return;}
+  tbody.innerHTML=groups.map((g,i)=>{
+    const p=parseFloat(g.tasa);
+    const badge=p>=80?'badge-green':p>=50?'badge-amber':'badge-red';
+    const t0pct=g.firmados>0?((g.firT0/g.firmados)*100).toFixed(0)+'%':'—';
+    return`<tr><td class="text-muted font-mono">${i+1}</td><td>${g.name}</td>
+      <td class="text-right font-mono">${n(g.asignado)}</td>
+      <td class="text-right font-mono">${n(g.firmados)}</td>
+      <td class="text-right font-mono" style="color:var(--blue)">${t0pct}</td>
+      <td class="text-right font-mono">${n(g.noFirmados)}</td>
+      <td class="text-right font-mono" style="color:var(--red);font-weight:700">${n(g.problematicos)}</td>
+      <td class="text-right font-mono">${n(g.devolucion)}</td>
+      <td class="text-right font-mono">${n(g.enAlmacen)}</td>
+      <td class="text-right"><span class="badge ${badge}">${g.tasa}%</span></td></tr>`;
+  }).join('');
+}
+
+function renderDiariaPuntos(data) {
+  const map={};
+  data.forEach(r=>{
+    if(!map[r.punto])map[r.punto]={asignado:0,firmados:0,problematicos:0,firT0:0,provincia:r.provincia};
+    const m=map[r.punto];
+    m.asignado+=r.asignado; m.firmados+=r.firmados; m.problematicos+=r.problematicos; m.firT0+=r.firT0;
+  });
+  const groups=Object.entries(map).map(([k,v])=>({name:k,...v,
+    tasa:v.asignado>0?(v.firmados/v.asignado*100).toFixed(1):'0.0'})).sort((a,b)=>b.asignado-a.asignado);
+  const top=groups.slice(0,15);
+  const lbl=top.map(g=>g.name.length>17?g.name.slice(0,17)+'…':g.name);
+
+  mkChart(chartsD,'d-chart-puntos',{type:'bar', data:{labels:lbl, datasets:[
+    {label:'Asignados',data:top.map(g=>g.asignado),backgroundColor:'#a78bfa',borderRadius:4},
+    {label:'Firmados', data:top.map(g=>g.firmados), backgroundColor:'#34d399',borderRadius:4}
+  ]}, options:hbarOpts()});
+
+  mkChart(chartsD,'d-chart-puntos-prob',{type:'bar', data:{labels:lbl, datasets:[
+    {label:'Problemáticos',data:top.map(g=>g.problematicos),backgroundColor:'#f87171',borderRadius:4}
+  ]}, options:hbarOpts({plugins:{legend:{display:false}}})});
+
+  const tbody=document.getElementById('d-tbody-puntos');
+  if(!groups.length){tbody.innerHTML='<tr><td colspan="8" class="no-data">Sin datos</td></tr>';return;}
+  tbody.innerHTML=groups.map((g,i)=>{
+    const p=parseFloat(g.tasa);
+    const badge=p>=80?'badge-green':p>=50?'badge-amber':'badge-red';
+    const t0pct=g.firmados>0?((g.firT0/g.firmados)*100).toFixed(0)+'%':'—';
+    return`<tr><td class="text-muted font-mono">${i+1}</td>
+      <td class="font-mono" style="font-size:12px">${g.name}</td><td class="text-muted">${g.provincia}</td>
+      <td class="text-right font-mono">${n(g.asignado)}</td>
+      <td class="text-right font-mono">${n(g.firmados)}</td>
+      <td class="text-right font-mono" style="color:var(--blue)">${t0pct}</td>
+      <td class="text-right font-mono" style="color:var(--red);font-weight:700">${n(g.problematicos)}</td>
+      <td class="text-right"><span class="badge ${badge}">${g.tasa}%</span></td></tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// TOTAL SALIDA DEL ALMACEN — INIT / FILTERS / RENDER
+// ══════════════════════════════════════════════
+function initAlmacen(data) {
+  setSelectOptions('a-provincia', [...new Set(data.map(r=>r.provincia))].sort());
+  document.getElementById('upload-screen').style.display = 'none';
+  document.getElementById('dash-almacen').style.display = 'flex';
+  applyAlmacenFilters();
+}
+function applyAlmacenFilters() {
+  let data=window.DATA_ALMACEN;
+  const desde=document.getElementById('a-desde').value, hasta=document.getElementById('a-hasta').value;
+  const prov=document.getElementById('a-provincia').value;
+  if(desde) data=data.filter(r=>r.fechaISO>=desde);
+  if(hasta) data=data.filter(r=>r.fechaISO<=hasta);
+  if(prov)  data=data.filter(r=>r.provincia===prov);
+  renderAlmacenAll(data);
+}
+function clearAlmacenFilters() {
+  ['a-desde','a-hasta','a-provincia'].forEach(id=>document.getElementById(id).value='');
+  applyAlmacenFilters();
+}
+function renderAlmacenAll(data) {
+  renderAlmacenResumen(data);
+  renderAlmacenPipeline(data);
+  renderAlmacenProvincias(data);
+  renderAlmacenPdvs(data);
+}
+
+function renderAlmacenResumen(data) {
+  const S=(k)=>data.reduce((s,r)=>s+r[k],0);
+  const totEnv=S('enviadas'), totLleg=S('llegada'), totFirm=S('firmadas');
+  const totHub=S('sinSalida'), totRuta=S('enRuta');
+  const efic = totEnv>0?(totFirm/totEnv*100).toFixed(1)+'%':'—';
+
+  setText('a-kpi-enviadas',  n(totEnv));
+  setText('a-kpi-llegada',   n(totLleg));
+  setText('a-kpi-firmadas',  n(totFirm));
+  setText('a-kpi-hub',       n(totHub));
+  setText('a-kpi-eficiencia',efic);
+
+  // Funnel: ¿dónde están las guías? (stacked horizontal bar)
+  // Representa la composición de las guías enviadas en 1 barra
+  const totTransito=S('sinLlegada'), totDesp=S('despachSinFirma');
+  const totProb=S('anormales')+S('retenidos')+S('devueltos');
+  const firmSinDesp=Math.max(0,totFirm-totDesp);
+  mkChart(chartsA,'a-chart-funnel',{ type:'bar',
+    data:{ labels:['Composición de Guías'],
+      datasets:[
+        {label:'Firmadas ✓',        data:[totFirm],          backgroundColor:'#34d399',borderRadius:0},
+        {label:'En ruta sin firmar', data:[totDesp],          backgroundColor:'#38bdf8',borderRadius:0},
+        {label:'En ruta',            data:[Math.max(0,totRuta-totDesp)],backgroundColor:'#60a5fa',borderRadius:0},
+        {label:'Atascadas en hub',   data:[totHub],           backgroundColor:'#f59e0b',borderRadius:0},
+        {label:'En tránsito',        data:[totTransito],      backgroundColor:'#a78bfa',borderRadius:0},
+        {label:'Problemáticas',      data:[totProb],          backgroundColor:'#f87171',borderRadius:0},
+      ]},
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{labels:{color:'#94a3b8',font:{size:11},boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>{
+          const pct=totEnv>0?((ctx.parsed.x/totEnv)*100).toFixed(1):'0';
+          return` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString('es-DO')} (${pct}%)`;
+        }}}},
+      scales:{ x:{stacked:true,grid:{color:'#1e293b'},ticks:{color:'#64748b',font:{size:11}}},
+               y:{stacked:true,grid:{display:false},ticks:{display:false}}}}
+  });
+
+  // Doughnut: composición del stock sin cerrar
+  const sinCerrarTotal=S('sinCerrar');
+  const hubPct=totHub, rutaPct=totRuta, anPct=S('anormales'), retPct=S('retenidos'), devPct=S('devueltos');
+  mkChart(chartsA,'a-chart-composicion',{ type:'doughnut',
+    data:{ labels:['Atascados en Hub','En Ruta','Anormales','Retenidos','Devueltos'],
+           datasets:[{data:[hubPct,rutaPct,anPct,retPct,devPct],
+             backgroundColor:['#f59e0b','#38bdf8','#f87171','#a78bfa','#ef4444'],borderWidth:2,borderColor:'#1e293b'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',
+      plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11},boxWidth:12,padding:8}}}}
+  });
+}
+
+function renderAlmacenPipeline(data) {
+  const S=(k)=>data.reduce((s,r)=>s+r[k],0);
+  const totEnv=S('enviadas'), totLleg=S('llegada'), totRuta=S('enRuta'), totFirm=S('firmadas');
+  const totProb=S('anormales')+S('retenidos')+S('devueltos');
+  const sp=(a,b)=>b>0?(a/b*100).toFixed(1)+'%':'—';
+
+  setText('a-vel-llegada', sp(totLleg,totEnv));
+  setText('a-vel-ruta',    sp(totRuta,totLleg));
+  setText('a-vel-firma',   sp(totFirm,totEnv));
+  setText('a-vel-problema',sp(totProb,totEnv));
+
+  // Etapas del pipeline por provincia
+  const map={};
+  data.forEach(r=>{
+    if(!map[r.provincia])map[r.provincia]={enviadas:0,llegada:0,enRuta:0,firmadas:0,sinSalida:0,anormales:0,retenidos:0,devueltos:0,sinCerrar:0};
+    const m=map[r.provincia];
+    m.enviadas+=r.enviadas; m.llegada+=r.llegada; m.enRuta+=r.enRuta;
+    m.firmadas+=r.firmadas; m.sinSalida+=r.sinSalida; m.anormales+=r.anormales;
+    m.retenidos+=r.retenidos; m.devueltos+=r.devueltos; m.sinCerrar+=r.sinCerrar;
+  });
+  const groups=Object.entries(map).map(([k,v])=>({name:k,...v})).sort((a,b)=>b.enviadas-a.enviadas);
+  const lbl=groups.map(g=>g.name);
+
+  mkChart(chartsA,'a-chart-pipeline-prov',{type:'bar', data:{labels:lbl, datasets:[
+    {label:'Enviadas', data:groups.map(g=>g.enviadas), backgroundColor:'#64748b',borderRadius:4},
+    {label:'Llegadas', data:groups.map(g=>g.llegada),  backgroundColor:'#a78bfa',borderRadius:4},
+    {label:'Firmadas', data:groups.map(g=>g.firmadas), backgroundColor:'#34d399',borderRadius:4},
+  ]}, options:hbarOpts()});
+
+  mkChart(chartsA,'a-chart-alertas',{type:'bar', data:{labels:lbl, datasets:[
+    {label:'Anormales', data:groups.map(g=>g.anormales), backgroundColor:'#f87171',borderRadius:4},
+    {label:'Retenidos', data:groups.map(g=>g.retenidos), backgroundColor:'#f59e0b',borderRadius:4},
+    {label:'Devueltos', data:groups.map(g=>g.devueltos), backgroundColor:'#ef4444',borderRadius:4},
+  ]}, options:hbarOpts()});
+
+  const tbody=document.getElementById('a-tbody-pipeline');
+  if(!groups.length){tbody.innerHTML='<tr><td colspan="11" class="no-data">Sin datos</td></tr>';return;}
+  tbody.innerHTML=groups.map((g,i)=>`<tr>
+    <td class="text-muted font-mono">${i+1}</td><td>${g.name}</td>
+    <td class="text-right font-mono">${n(g.enviadas)}</td>
+    <td class="text-right font-mono">${n(g.llegada)}</td>
+    <td class="text-right font-mono" style="color:var(--amber)">${n(g.sinSalida)}</td>
+    <td class="text-right font-mono">${n(g.enRuta)}</td>
+    <td class="text-right font-mono" style="color:var(--green)">${n(g.firmadas)}</td>
+    <td class="text-right font-mono" style="color:var(--red)">${n(g.anormales)}</td>
+    <td class="text-right font-mono" style="color:var(--amber)">${n(g.retenidos)}</td>
+    <td class="text-right font-mono" style="color:var(--red)">${n(g.devueltos)}</td>
+    <td class="text-right font-mono">${n(g.sinCerrar)}</td></tr>`).join('');
+}
+
+function renderAlmacenProvincias(data) {
+  const map={};
+  data.forEach(r=>{
+    if(!map[r.provincia])map[r.provincia]={enviadas:0,firmadas:0,enRuta:0,retenidos:0,sinCerrar:0};
+    const m=map[r.provincia];
+    m.enviadas+=r.enviadas; m.firmadas+=r.firmadas; m.enRuta+=r.enRuta; m.retenidos+=r.retenidos; m.sinCerrar+=r.sinCerrar;
+  });
+  const groups=Object.entries(map).map(([k,v])=>({name:k,...v})).sort((a,b)=>b.enviadas-a.enviadas);
+  const lbl=groups.map(g=>g.name);
+  mkChart(chartsA,'a-chart-prov-bar',{type:'bar', data:{labels:lbl, datasets:[
+    {label:'Enviadas',data:groups.map(g=>g.enviadas),backgroundColor:'#f59e0b',borderRadius:4},
+    {label:'Firmadas',data:groups.map(g=>g.firmadas),backgroundColor:'#34d399',borderRadius:4}
+  ]}, options:hbarOpts()});
+  mkChart(chartsA,'a-chart-prov-sincerrar',{type:'bar', data:{labels:lbl, datasets:[
+    {label:'Atascadas en Hub',data:groups.map(g=>g.sinCerrar),backgroundColor:'#f87171',borderRadius:4}
+  ]}, options:hbarOpts({plugins:{legend:{display:false}}})});
+
+  const tbody=document.getElementById('a-tbody-provincias');
+  if(!groups.length){tbody.innerHTML='<tr><td colspan="7" class="no-data">Sin datos</td></tr>';return;}
+  tbody.innerHTML=groups.map((g,i)=>`<tr><td class="text-muted font-mono">${i+1}</td><td>${g.name}</td>
+    <td class="text-right font-mono">${n(g.enviadas)}</td><td class="text-right font-mono">${n(g.firmadas)}</td>
+    <td class="text-right font-mono">${n(g.enRuta)}</td><td class="text-right font-mono">${n(g.retenidos)}</td>
+    <td class="text-right font-mono">${n(g.sinCerrar)}</td></tr>`).join('');
+}
+
+function renderAlmacenPdvs(data) {
+  const map={};
+  data.forEach(r=>{
+    if(!map[r.pdv])map[r.pdv]={enviadas:0,firmadas:0,enRuta:0,sinCerrar:0,provincia:r.provincia};
+    const m=map[r.pdv];
+    m.enviadas+=r.enviadas; m.firmadas+=r.firmadas; m.enRuta+=r.enRuta; m.sinCerrar+=r.sinCerrar;
+  });
+  const groups=Object.entries(map).map(([k,v])=>({name:k,...v})).sort((a,b)=>b.enviadas-a.enviadas);
+  const top=groups.slice(0,15);
+  const lbl=top.map(g=>g.name.length>17?g.name.slice(0,17)+'…':g.name);
+  mkChart(chartsA,'a-chart-pdvs',{type:'bar', data:{labels:lbl, datasets:[
+    {label:'Enviadas',data:top.map(g=>g.enviadas),backgroundColor:'#f59e0b',borderRadius:4},
+    {label:'Firmadas',data:top.map(g=>g.firmadas),backgroundColor:'#34d399',borderRadius:4}
+  ]}, options:hbarOpts()});
+  const tbody=document.getElementById('a-tbody-pdvs');
+  if(!groups.length){tbody.innerHTML='<tr><td colspan="7" class="no-data">Sin datos</td></tr>';return;}
+  tbody.innerHTML=groups.map((g,i)=>`<tr><td class="text-muted font-mono">${i+1}</td>
+    <td class="font-mono" style="font-size:12px">${g.name}</td><td class="text-muted">${g.provincia}</td>
+    <td class="text-right font-mono">${n(g.enviadas)}</td><td class="text-right font-mono">${n(g.firmadas)}</td>
+    <td class="text-right font-mono">${n(g.enRuta)}</td><td class="text-right font-mono">${n(g.sinCerrar)}</td></tr>`).join('');
+}
+
+// ══════════════════════════════════════════════
+// TOTALIDAD DE OPERACION — INIT / FILTERS / RENDER
+// ══════════════════════════════════════════════
+function initOperacion(data) {
+  setSelectOptions('o-provincia', [...new Set(data.map(r=>r.provincia))].sort());
+  document.getElementById('upload-screen').style.display = 'none';
+  document.getElementById('dash-operacion').style.display = 'flex';
+  applyOperacionFilters();
+}
+function applyOperacionFilters() {
+  let data=window.DATA_OPERACION;
+  const desde=document.getElementById('o-desde').value, hasta=document.getElementById('o-hasta').value;
+  const prov=document.getElementById('o-provincia').value;
+  if(desde) data=data.filter(r=>r.fechaISO>=desde);
+  if(hasta) data=data.filter(r=>r.fechaISO<=hasta);
+  if(prov)  data=data.filter(r=>r.provincia===prov);
+  renderOperacionAll(data);
+}
+function clearOperacionFilters() {
+  ['o-desde','o-hasta','o-provincia'].forEach(id=>document.getElementById(id).value='');
+  applyOperacionFilters();
+}
+function renderOperacionAll(data) {
+  renderOperacionResumen(data);
+  renderOperacionVelocidad(data);
+  renderOperacionProvincias(data);
+  renderOperacionPdvs(data);
+}
+
+function renderOperacionResumen(data) {
+  const S=(k)=>data.reduce((s,r)=>s+r[k],0);
+  const totVol=S('evaluar')||S('volumen'), totFirm=S('firmados');
+  const totProb=S('problematicos'), totNF=S('noFirmados'), totRSF=S('enRutaSinFirma');
+  const tasa = totVol>0?(totFirm/totVol*100).toFixed(1):'0.0';
+
+  setText('o-kpi-volumen',      n(totVol));
+  setText('o-kpi-firmados',     n(totFirm));
+  setText('o-kpi-problematicos',n(totProb));
+  setText('o-kpi-enrutasinfirma',n(totRSF));
+  setText('o-kpi-tasa',         tasa+'%');
+
+  // Línea: firmados vs no firmados por fecha
+  const bd={};
+  data.forEach(r=>{ if(r.fechaISO){if(!bd[r.fechaISO])bd[r.fechaISO]={f:0,nf:0}; bd[r.fechaISO].f+=r.firmados; bd[r.fechaISO].nf+=r.noFirmados;} });
+  const de=Object.entries(bd).sort(([a],[b])=>a.localeCompare(b));
+  const dl=de.map(([d])=>{const[,m,dd]=d.split('-');return`${dd}/${m}`;});
+  mkChart(chartsO,'o-chart-linea',{type:'line', data:{labels:dl, datasets:[
+    {label:'Firmados',   data:de.map(([,v])=>v.f),  borderColor:'#34d399',backgroundColor:'rgba(52,211,153,0.15)', borderWidth:2,pointRadius:4,fill:true,tension:0.3},
+    {label:'No Firmados',data:de.map(([,v])=>v.nf), borderColor:'#f87171',backgroundColor:'rgba(248,113,113,0.15)',borderWidth:2,pointRadius:4,fill:true,tension:0.3}
+  ]}, options:lineOpts()});
+
+  // Barras apiladas: Problemáticos vs No Problemáticos por Provincia
+  const pm={};
+  data.forEach(r=>{ if(!pm[r.provincia])pm[r.provincia]={p:0,np:0}; pm[r.provincia].p+=r.problematicos; pm[r.provincia].np+=r.noProblematicos; });
+  const pe=Object.entries(pm).sort(([,a],[,b])=>(b.p+b.np)-(a.p+a.np)).slice(0,10);
+  mkChart(chartsO,'o-chart-problematicos',{type:'bar',
+    data:{labels:pe.map(([k])=>k), datasets:[
+      {label:'⚠ Problemáticos',     data:pe.map(([,v])=>v.p),  backgroundColor:'#f87171',borderRadius:4},
+      {label:'No problemáticos',    data:pe.map(([,v])=>v.np), backgroundColor:'#64748b',borderRadius:4}
+    ]},
+    options:hbarOpts({plugins:{legend:{labels:{color:'#94a3b8',font:{size:11},boxWidth:12}}}})
+  });
+}
+
+function renderOperacionVelocidad(data) {
+  const S=(k)=>data.reduce((s,r)=>s+r[k],0);
+  const totVol=S('evaluar')||S('volumen');
+  // Tasas promedio ponderado T+0..T+4 (promedio por registro según volumen)
+  const wavg=(key)=>{ const tot=data.reduce((s,r)=>s+(r.evaluar||r.volumen),0);
+    if(!tot) return 0;
+    return data.reduce((s,r)=>s+r[key]*(r.evaluar||r.volumen),0)/tot; };
+  const t0=wavg('tasaT0'), t1=wavg('tasaT1'), t2=wavg('tasaT2'), t3=wavg('tasaT3'), t4=wavg('tasaT4');
+
+  setText('o-vel-t0', (t0*100).toFixed(1)+'%');
+  setText('o-vel-t1', (t1*100).toFixed(1)+'%');
+  setText('o-vel-t2', (t2*100).toFixed(1)+'%');
+  setText('o-vel-t3', (t3*100).toFixed(1)+'%');
+  setText('o-vel-t4', (t4*100).toFixed(1)+'%');
+
+  // Curva acumulada T+0 → T+7 usando sumas de volúmenes cumT0..cumT7
+  const cT=[S('cumT0'),S('cumT1'),S('cumT2'),S('cumT3'),S('cumT4'),S('cumT5'),S('cumT6'),S('cumT7')];
+  const totEval=S('evaluar')||S('volumen');
+  const curva=cT.map(v=>totEval>0?parseFloat((v/totEval*100).toFixed(2)):0);
+  mkChart(chartsO,'o-chart-curva',{type:'line',
+    data:{labels:['T+0','T+1','T+2','T+3','T+4','T+5','T+6','T+7'],
+      datasets:[{label:'% Acumulado Firmado',data:curva,
+        borderColor:'#34d399',backgroundColor:'rgba(52,211,153,0.18)',
+        borderWidth:3,pointBackgroundColor:'#34d399',pointRadius:6,pointHoverRadius:8,
+        fill:true,tension:0.4}]},
+    options:lineOpts({plugins:{
+      legend:{labels:{color:'#94a3b8',font:{size:11},boxWidth:12}},
+      tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(1)}% firmado al día ${ctx.label}`}}
+    }, scales:{
+      x:{grid:{color:'#1e293b'},ticks:{color:'#94a3b8',font:{size:12}}},
+      y:{min:0,max:100,grid:{color:'#1e293b'},ticks:{color:'#64748b',font:{size:11},callback:v=>v+'%'}}
+    }})
+  });
+
+  // Tipo de negocio: tasa de recepción promedio
+  const neg={};
+  data.forEach(r=>{
+    const t=r.tipoNeg||'Desconocido';
+    if(!neg[t])neg[t]={vol:0,fir:0,prob:0};
+    neg[t].vol+=r.evaluar||r.volumen; neg[t].fir+=r.firmados; neg[t].prob+=r.problematicos;
+  });
+  const negs=Object.entries(neg).map(([k,v])=>({name:k,...v,
+    tasa:v.vol>0?parseFloat((v.fir/v.vol*100).toFixed(1)):0})).sort((a,b)=>b.vol-a.vol);
+  mkChart(chartsO,'o-chart-negocio',{type:'bar',
+    data:{labels:negs.map(g=>g.name),
+      datasets:[
+        {label:'Tasa Recepción %',data:negs.map(g=>g.tasa),
+          backgroundColor:negs.map(g=>g.tasa>=80?'#34d399':g.tasa>=50?'#f59e0b':'#f87171'),
+          borderRadius:6}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y}% de tasa de recepción`}}},
+      scales:{
+        x:{grid:{color:'#1e293b'},ticks:{color:'#94a3b8',font:{size:11}}},
+        y:{max:100,grid:{color:'#1e293b'},ticks:{color:'#64748b',font:{size:11},callback:v=>v+'%'}}
+      }}
+  });
+}
+
+function renderOperacionProvincias(data) {
+  const map={};
+  data.forEach(r=>{
+    if(!map[r.provincia])map[r.provincia]={volumen:0,firmados:0,noFirmados:0,problematicos:0,noProblematicos:0};
+    const m=map[r.provincia];
+    m.volumen+=r.evaluar||r.volumen; m.firmados+=r.firmados; m.noFirmados+=r.noFirmados;
+    m.problematicos+=r.problematicos; m.noProblematicos+=r.noProblematicos;
+  });
+  const groups=Object.entries(map).map(([k,v])=>({name:k,...v,
+    tasa:v.volumen>0?(v.firmados/v.volumen*100).toFixed(1):'0.0'})).sort((a,b)=>b.volumen-a.volumen);
+  const lbl=groups.map(g=>g.name);
+  mkChart(chartsO,'o-chart-prov-bar',{type:'bar', data:{labels:lbl, datasets:[
+    {label:'Firmados',   data:groups.map(g=>g.firmados),   backgroundColor:'#34d399',borderRadius:4},
+    {label:'No Firmados',data:groups.map(g=>g.noFirmados), backgroundColor:'#f87171',borderRadius:4}
+  ]}, options:hbarOpts()});
+  mkChart(chartsO,'o-chart-prov-prob',{type:'bar', data:{labels:lbl, datasets:[
+    {label:'⚠ Problemáticos',    data:groups.map(g=>g.problematicos),   backgroundColor:'#f87171',borderRadius:4},
+    {label:'No problemáticos',  data:groups.map(g=>g.noProblematicos), backgroundColor:'#64748b',borderRadius:4}
+  ]}, options:hbarOpts()});
+
+  const tbody=document.getElementById('o-tbody-provincias');
+  if(!groups.length){tbody.innerHTML='<tr><td colspan="8" class="no-data">Sin datos</td></tr>';return;}
+  tbody.innerHTML=groups.map((g,i)=>{
+    const p=parseFloat(g.tasa); const badge=p>=80?'badge-green':p>=50?'badge-amber':'badge-red';
+    return`<tr><td class="text-muted font-mono">${i+1}</td><td>${g.name}</td>
+      <td class="text-right font-mono">${n(g.volumen)}</td>
+      <td class="text-right font-mono">${n(g.firmados)}</td>
+      <td class="text-right font-mono">${n(g.noFirmados)}</td>
+      <td class="text-right font-mono" style="color:var(--red);font-weight:700">${n(g.problematicos)}</td>
+      <td class="text-right font-mono">${n(g.noProblematicos)}</td>
+      <td class="text-right"><span class="badge ${badge}">${g.tasa}%</span></td></tr>`;
+  }).join('');
+}
+
+function renderOperacionPdvs(data) {
+  const map={};
+  data.forEach(r=>{
+    if(!map[r.pdv])map[r.pdv]={volumen:0,firmados:0,noFirmados:0,problematicos:0,provincia:r.provincia,tipoNeg:r.tipoNeg};
+    const m=map[r.pdv];
+    m.volumen+=r.evaluar||r.volumen; m.firmados+=r.firmados; m.noFirmados+=r.noFirmados; m.problematicos+=r.problematicos;
+  });
+  const groups=Object.entries(map).map(([k,v])=>({name:k,...v,
+    tasa:v.volumen>0?(v.firmados/v.volumen*100).toFixed(1):'0.0'})).sort((a,b)=>b.problematicos-a.problematicos);
+  const top=groups.slice(0,15);
+  const lbl=top.map(g=>g.name.length>17?g.name.slice(0,17)+'…':g.name);
+  mkChart(chartsO,'o-chart-pdvs',{type:'bar', data:{labels:lbl, datasets:[
+    {label:'⚠ Problemáticos',data:top.map(g=>g.problematicos),backgroundColor:'#f87171',borderRadius:4},
+    {label:'No firmados',    data:top.map(g=>Math.max(0,g.noFirmados-g.problematicos)),backgroundColor:'#64748b',borderRadius:4}
+  ]}, options:hbarOpts()});
+
+  const tbody=document.getElementById('o-tbody-pdvs');
+  if(!groups.length){tbody.innerHTML='<tr><td colspan="9" class="no-data">Sin datos</td></tr>';return;}
+  tbody.innerHTML=groups.map((g,i)=>{
+    const p=parseFloat(g.tasa); const badge=p>=80?'badge-green':p>=50?'badge-amber':'badge-red';
+    return`<tr><td class="text-muted font-mono">${i+1}</td>
+      <td class="font-mono" style="font-size:12px">${g.name}</td>
+      <td class="text-muted">${g.provincia}</td>
+      <td class="text-muted" style="font-size:11px">${g.tipoNeg||'—'}</td>
+      <td class="text-right font-mono">${n(g.volumen)}</td>
+      <td class="text-right font-mono">${n(g.firmados)}</td>
+      <td class="text-right font-mono">${n(g.noFirmados)}</td>
+      <td class="text-right font-mono" style="color:var(--red);font-weight:700">${n(g.problematicos)}</td>
+      <td class="text-right"><span class="badge ${badge}">${g.tasa}%</span></td></tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// INICIALIZAR TARJETAS NUEVAS esto es una prueba 
+// ══════════════════════════════════════════════
+setupNewCard('drop-zone-diaria',    'file-input-diaria',    'status-diaria',    'err-diaria',    parseExcelDiaria,    'dash-diaria',    'DATA_DIARIA',    initDiaria);
+setupNewCard('drop-zone-almacen',   'file-input-almacen',   'status-almacen',   'err-almacen',   parseExcelAlmacen,   'dash-almacen',   'DATA_ALMACEN',   initAlmacen);
+setupNewCard('drop-zone-operacion', 'file-input-operacion', 'status-operacion', 'err-operacion', parseExcelOperacion, 'dash-operacion', 'DATA_OPERACION', initOperacion);
+</script>
+</body>
+</html>
