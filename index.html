@@ -563,12 +563,12 @@
       <p id="upload-error"></p>
     </div>
 
-    <!-- ─ Tarjeta 2: OPERACION DIARIA ─ -->
+    <!-- ─ Tarjeta 2: INFORME DE MENSAJERÍA ─ -->
     <div id="drop-zone-diaria" class="upload-card card-diaria">
-      <span class="card-badge">Operación Diaria</span>
+      <span class="card-badge">Informe de Mensajería</span>
       <span class="drop-icon">📋</span>
-      <h2>Operación Diaria</h2>
-      <p>Firmados, no firmados y paquetes problemáticos por piloto</p>
+      <h2>Informe de Mensajería</h2>
+      <p>Firmados, no firmados, problemáticos, velocidad T+N por piloto y punto</p>
       <button class="btn-upload" style="background:var(--purple)" onclick="document.getElementById('file-input-diaria').click()">
         Seleccionar Excel
       </button>
@@ -784,13 +784,13 @@
 </div>
 
 <!-- ══════════════════════════════════════════════
-     DASHBOARD — OPERACION DIARIA
+     DASHBOARD — INFORME DE MENSAJERÍA
      Enfoque: Velocidad de firma T+0…T+7
 ══════════════════════════════════════════════ -->
 <div id="dash-diaria" style="display:none;flex-direction:column;min-height:100vh">
   <header>
     <div class="header-top">
-      <span class="brand">📋 Operación Diaria</span>
+      <span class="brand">📋 Informe de Mensajería</span>
       <div class="tabs">
         <button class="tab-btn active" onclick="switchTabD('diaria','resumen',event)">Resumen</button>
         <button class="tab-btn" onclick="switchTabD('diaria','velocidad',event)">Velocidad de Firma</button>
@@ -816,37 +816,37 @@
     <div id="diaria-tab-resumen" class="tab-panel active">
       <div class="kpi-grid">
         <div class="kpi-card"><div class="kpi-label">Paquetes Asignados</div><div class="kpi-value" id="d-kpi-asignados">—</div></div>
-        <div class="kpi-card"><div class="kpi-label">Paquetes Firmados</div><div class="kpi-value" id="d-kpi-firmados">—</div></div>
-        <div class="kpi-card"><div class="kpi-label">No Firmados</div><div class="kpi-value" id="d-kpi-nofirmados">—</div></div>
-        <div class="kpi-card kpi-problema"><div class="kpi-label">Problemáticos</div><div class="kpi-value" id="d-kpi-problematicos">—</div></div>
-        <div class="kpi-card"><div class="kpi-label">% Tasa Firma</div><div class="kpi-value" id="d-kpi-tasa">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Entrega Confirmada</div><div class="kpi-value" id="d-kpi-firmados">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">No Confirmados</div><div class="kpi-value" id="d-kpi-nofirmados">—</div></div>
+        <div class="kpi-card kpi-problema"><div class="kpi-label">⚠ Problemáticos</div><div class="kpi-value" id="d-kpi-problematicos">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">% Tasa de Confirmación</div><div class="kpi-value" id="d-kpi-tasa">—</div></div>
       </div>
       <div class="charts-2">
         <div class="chart-card">
-          <div class="chart-title">Asignados vs Firmados por Fecha</div>
+          <div class="chart-title">Asignados vs Entrega Confirmada por Fecha</div>
           <div class="chart-wrap"><canvas id="d-chart-linea"></canvas></div>
         </div>
-        <div class="chart-card">
-          <div class="chart-title">¿Por qué no se entregó? — Desglose</div>
+        <div class="chart-card" style="border-color:rgba(248,113,113,0.4)">
+          <div class="chart-title" style="color:var(--red)">Desglose de No Confirmados — ¿Por qué no llegó?</div>
           <div class="chart-wrap"><canvas id="d-chart-noentrega"></canvas></div>
         </div>
       </div>
     </div>
-    <!-- Velocidad de Firma (T+N) -->
+    <!-- Velocidad de Confirmación (T+N) -->
     <div id="diaria-tab-velocidad" class="tab-panel">
       <div class="kpi-mini-grid cols-4">
-        <div class="kpi-mini-card vel-0"><div class="kpi-mini-label">Mismo Día (T+0)</div><div class="kpi-mini-value" id="d-vel-t0">—</div><div class="kpi-mini-sub">del total firmado</div></div>
-        <div class="kpi-mini-card vel-1"><div class="kpi-mini-label">Acum. hasta T+1</div><div class="kpi-mini-value" id="d-vel-t1">—</div><div class="kpi-mini-sub">del total firmado</div></div>
-        <div class="kpi-mini-card vel-2"><div class="kpi-mini-label">Acum. hasta T+2</div><div class="kpi-mini-value" id="d-vel-t2">—</div><div class="kpi-mini-sub">del total firmado</div></div>
-        <div class="kpi-mini-card vel-4"><div class="kpi-mini-label">Rezagados T+3 o más</div><div class="kpi-mini-value" id="d-vel-t3plus">—</div><div class="kpi-mini-sub">del total firmado</div></div>
+        <div class="kpi-mini-card vel-0"><div class="kpi-mini-label">Mismo Día (T+0)</div><div class="kpi-mini-value" id="d-vel-t0">—</div><div class="kpi-mini-sub">del total confirmado</div></div>
+        <div class="kpi-mini-card vel-1"><div class="kpi-mini-label">Acum. hasta T+1</div><div class="kpi-mini-value" id="d-vel-t1">—</div><div class="kpi-mini-sub">del total confirmado</div></div>
+        <div class="kpi-mini-card vel-2"><div class="kpi-mini-label">Acum. hasta T+2</div><div class="kpi-mini-value" id="d-vel-t2">—</div><div class="kpi-mini-sub">del total confirmado</div></div>
+        <div class="kpi-mini-card vel-4"><div class="kpi-mini-label">Rezagados T+3 o más</div><div class="kpi-mini-value" id="d-vel-t3plus">—</div><div class="kpi-mini-sub">del total confirmado</div></div>
       </div>
       <div class="charts-2">
         <div class="chart-card">
-          <div class="chart-title">Firmados por Día de Tránsito (T+N)</div>
+          <div class="chart-title">Entrega Confirmada por Día de Tránsito (T+N)</div>
           <div class="chart-wrap" style="height:300px"><canvas id="d-chart-speed-bar"></canvas></div>
         </div>
         <div class="chart-card" style="border-color:rgba(248,113,113,0.4)">
-          <div class="chart-title" style="color:var(--red)">Antigüedad de Pendientes no Firmados</div>
+          <div class="chart-title" style="color:var(--red)">Antigüedad de Pendientes No Confirmados</div>
           <div class="chart-wrap" style="height:300px"><canvas id="d-chart-aging"></canvas></div>
         </div>
       </div>
@@ -855,16 +855,16 @@
     <!-- Pilotos -->
     <div id="diaria-tab-pilotos" class="tab-panel">
       <div class="charts-2">
-        <div class="chart-card"><div class="chart-title">Asignados vs Firmados — Top 10 Pilotos</div><div class="chart-wrap"><canvas id="d-chart-pilot-bar"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Asignados vs Entrega Confirmada — Top 10 Pilotos</div><div class="chart-wrap"><canvas id="d-chart-pilot-bar"></canvas></div></div>
         <div class="chart-card" style="border-color:rgba(248,113,113,0.4)"><div class="chart-title" style="color:var(--red)">⚠ Problemáticos + Devoluciones por Piloto</div><div class="chart-wrap"><canvas id="d-chart-pilot-prob"></canvas></div></div>
       </div>
       <div class="table-card">
-        <div class="table-card-header">Ranking de Pilotos — Eficiencia + Velocidad</div>
+        <div class="table-card-header">Ranking de Pilotos — Eficiencia + Velocidad de Confirmación</div>
         <div style="overflow-x:auto"><table><thead><tr>
           <th>#</th><th>Piloto</th>
-          <th class="text-right">Asignados</th><th class="text-right">Firmados</th>
+          <th class="text-right">Asignados</th><th class="text-right">Confirmados</th>
           <th class="text-right">T+0 🚀</th>
-          <th class="text-right">No Firmados</th>
+          <th class="text-right">No Confirm.</th>
           <th class="text-right" style="color:var(--red)">⚠ Prob.</th>
           <th class="text-right">Devol.</th><th class="text-right">En Almacén</th><th class="text-right">Tasa</th>
         </tr></thead><tbody id="d-tbody-pilotos"></tbody></table></div>
@@ -873,14 +873,14 @@
     <!-- Puntos -->
     <div id="diaria-tab-puntos" class="tab-panel">
       <div class="charts-2">
-        <div class="chart-card"><div class="chart-title">Top Puntos — Asignados vs Firmados</div><div class="chart-wrap" style="height:340px"><canvas id="d-chart-puntos"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Top Puntos — Asignados vs Entrega Confirmada</div><div class="chart-wrap" style="height:340px"><canvas id="d-chart-puntos"></canvas></div></div>
         <div class="chart-card" style="border-color:rgba(248,113,113,0.4)"><div class="chart-title" style="color:var(--red)">⚠ Problemáticos por Punto</div><div class="chart-wrap" style="height:340px"><canvas id="d-chart-puntos-prob"></canvas></div></div>
       </div>
       <div class="table-card">
         <div class="table-card-header">Detalle por Punto de Entrega</div>
         <div style="overflow-x:auto"><table><thead><tr>
           <th>#</th><th>Punto</th><th>Provincia</th>
-          <th class="text-right">Asignados</th><th class="text-right">Firmados</th>
+          <th class="text-right">Asignados</th><th class="text-right">Confirmados</th>
           <th class="text-right">T+0 🚀</th>
           <th class="text-right" style="color:var(--red)">⚠ Prob.</th><th class="text-right">Tasa</th>
         </tr></thead><tbody id="d-tbody-puntos"></tbody></table></div>
@@ -1808,43 +1808,101 @@ function parseExcelDiaria(file) {
     const reader = new FileReader();
     reader.onload = e => {
       try {
-        const wb  = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-        const ws  = wb.Sheets[wb.SheetNames[0]];
-        const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        const wb   = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const ws   = wb.Sheets[wb.SheetNames[0]];
+        // Usamos header:1 para obtener arrays y evitar problemas de encoding
+        // con nombres de columna en chino al acceder por nombre de texto
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '', header: 1 });
+        if (rows.length < 2) { resolve([]); return; }
+
         const f = v => parseFloat(v||0)||0;
-        const data = raw.map(row => {
-          const fecha     = row['Fecha de envio'] || row['Fecha de envío'] || '';
-          const provincia = (row['Provincia receptora'] || '').toString().trim();
-          const punto     = (row['Punto de entrega'] || '').toString().trim();
-          const pilotoRaw = (row['A quien liquidar'] || row['A quién liquidar'] || '').toString();
+
+        // Detectar columnas por nombre (robustez ante variantes del Excel)
+        // Columnas fijas en español se detectan por nombre; columnas en chino
+        // se detectan por índice para evitar cualquier problema de encoding.
+        const hdr = rows[0].map(h => String(h||'').trim());
+        const col = name => hdr.findIndex(h => h === name);
+
+        // Índices de columnas en español (detectados por nombre)
+        const iDate  = col('Fecha de envio') !== -1 ? col('Fecha de envio') : col('Fecha de envío');
+        const iProv  = col('Provincia receptora');
+        const iPunto = col('Punto de entrega');
+        const iPilot = col('A quien liquidar') !== -1 ? col('A quien liquidar') : col('A quién liquidar');
+        const iAsig  = col('Importe de la entrega');
+        const iDev   = col('No firmado - devolución') !== -1 ? col('No firmado - devolución') : col('No firmado - devolucion');
+
+        // Columnas en chino: se accede por posición (índice) para ser
+        // independiente del encoding de texto en el browser.
+        // Posiciones confirmadas del Excel "Informe de mensajería Resumen":
+        // [8]  签收-总票数        firmados
+        // [9]  签收-签收率        tasa firma (0-1)
+        // [11] 签收-当日签收票数T  T+0
+        // [12] 签收-T+1签收票数   T+1
+        // [13] 签收-T+2签收票数   T+2
+        // [14] 签收-T+3到T+4     T+3-T+4
+        // [15] 签收-T+5到T+6     T+5-T+6
+        // [16] 签收->=T+7        T+7+
+        // [17] 未签收-总票数      no firmados
+        // [18] 未签收-T日         nf T+0
+        // [19] 未签收-T+1        nf T+1
+        // [20] 未签收-T+2        nf T+2
+        // [21] 未签收-T+3到T+4   nf T+3-T+4
+        // [22] 未签收-T+5到T+6   nf T+5-T+6
+        // [23] 未签收->=T+7      nf T+7+
+        // [24] 未签收-问题件      problemáticos
+        // [26] 未签收-留仓件入仓  en almacén
+        const C = {
+          firmados:      8,
+          tasaFirma:     9,
+          firT0:        11,
+          firT1:        12,
+          firT2:        13,
+          firT34:       14,
+          firT56:       15,
+          firT7p:       16,
+          noFirmados:   17,
+          nfT0:         18,
+          nfT1:         19,
+          nfT2:         20,
+          nfT34:        21,
+          nfT56:        22,
+          nfT7p:        23,
+          problematicos:24,
+          enAlmacen:    26,
+        };
+
+        const data = rows.slice(1).map(row => {
+          const fecha     = row[iDate] || '';
+          const provincia = String(row[iProv]  || '').trim();
+          const punto     = String(row[iPunto] || '').trim();
+          const pilotoRaw = String(row[iPilot] || '');
           const d = excelDateToDate(fecha);
           return {
             fecha: d, fechaISO: formatDateISO(d),
             provincia: provincia || 'Sin especificar',
             punto:     punto     || 'Sin especificar',
             piloto:    cleanPiloto(pilotoRaw),
-            asignado:       f(row['Importe de la entrega']),
-            firmados:       f(row['签收-总票数']),
-            noFirmados:     f(row['未签收-总票数']),
-            problematicos:  f(row['未签收-问题件']),
-            devolucion:     f(row['No firmado - devolución']),
-            enAlmacen:      f(row['未签收-留仓件入仓']),
-            // velocidad T+N (firmados por día de tránsito)
-            firT0:  f(row['签收-当日签收票数T']),
-            firT1:  f(row['签收-T+1签收票数']),
-            firT2:  f(row['签收-T+2签收票数']),
-            firT34: f(row['签收-T+3到T+4签收票数']),
-            firT56: f(row['签收-T+5到T+6签收票数']),
-            firT7p: f(row['签收->=T+7签收票数']),
-            // antigüedad pendientes no firmados
-            nfT0:   f(row['未签收-T日未签收']),
-            nfT1:   f(row['未签收-T+1未签收']),
-            nfT2:   f(row['未签收-T+2未签收']),
-            nfT34:  f(row['未签收-T+3到T+4未签收']),
-            nfT56:  f(row['未签收-T+5到T+6未签收']),
-            nfT7p:  f(row['未签收->=T+7未签收']),
+            asignado:       f(iAsig  >= 0 ? row[iAsig]  : 0),
+            firmados:       f(row[C.firmados]),
+            noFirmados:     f(row[C.noFirmados]),
+            problematicos:  f(row[C.problematicos]),
+            devolucion:     f(iDev   >= 0 ? row[iDev]   : 0),
+            enAlmacen:      f(row[C.enAlmacen]),
+            firT0:          f(row[C.firT0]),
+            firT1:          f(row[C.firT1]),
+            firT2:          f(row[C.firT2]),
+            firT34:         f(row[C.firT34]),
+            firT56:         f(row[C.firT56]),
+            firT7p:         f(row[C.firT7p]),
+            nfT0:           f(row[C.nfT0]),
+            nfT1:           f(row[C.nfT1]),
+            nfT2:           f(row[C.nfT2]),
+            nfT34:          f(row[C.nfT34]),
+            nfT56:          f(row[C.nfT56]),
+            nfT7p:          f(row[C.nfT7p]),
           };
-        }).filter(r => r.provincia !== 'Sin especificar');
+        }).filter(r => r.provincia !== 'Sin especificar' && r.fecha !== null);
+
         resolve(data);
       } catch (err) { reject(err); }
     };
@@ -1996,6 +2054,10 @@ async function handleNewFile(file, statusId, errId, parseFn, dashId, dataVar, in
 // OPERACION DIARIA — INIT / FILTERS / RENDER
 // ══════════════════════════════════════════════
 function initDiaria(data) {
+  // Resetear filtros antes de poblar para que no quede data de carga anterior
+  ['d-desde','d-hasta','d-provincia','d-piloto'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
   setSelectOptions('d-provincia', [...new Set(data.map(r=>r.provincia))].sort());
   setSelectOptions('d-piloto',    [...new Set(data.map(r=>r.piloto))].sort());
   document.getElementById('upload-screen').style.display = 'none';
@@ -2039,17 +2101,28 @@ function renderDiariaResumen(data) {
   const de=Object.entries(bd).sort(([a],[b])=>a.localeCompare(b));
   const dl=de.map(([d])=>{const[,m,dd]=d.split('-');return`${dd}/${m}`;});
   mkChart(chartsD,'d-chart-linea',{ type:'line', data:{ labels:dl, datasets:[
-    {label:'Asignados',data:de.map(([,v])=>v.a),borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,0.15)',borderWidth:2,pointRadius:4,fill:true,tension:0.3},
-    {label:'Firmados', data:de.map(([,v])=>v.f),borderColor:'#34d399',backgroundColor:'rgba(52,211,153,0.15)', borderWidth:2,pointRadius:4,fill:true,tension:0.3}
+    {label:'Asignados',          data:de.map(([,v])=>v.a),borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,0.15)',borderWidth:2,pointRadius:4,fill:true,tension:0.3},
+    {label:'Entrega Confirmada', data:de.map(([,v])=>v.f),borderColor:'#34d399',backgroundColor:'rgba(52,211,153,0.15)', borderWidth:2,pointRadius:4,fill:true,tension:0.3}
   ]}, options:lineOpts()});
 
-  // Doughnut: ¿Por qué no se entregó?
+  // Doughnut: desglose de No Confirmados — de dónde vienen los problemas
   const totDev=S('devolucion'), totAlm=S('enAlmacen');
   const otrosNF = Math.max(0, totNF - totP - totDev - totAlm);
   mkChart(chartsD,'d-chart-noentrega',{ type:'doughnut',
-    data:{ labels:['Problemáticos','Devolución','Retenidos en Almacén','Pendientes normales'],
+    data:{ labels:[
+      'Problemáticos (問題件)',   // 未签收-问题件: paquetes con incidencia registrada
+      'Devolución',              // No firmado - devolución
+      'Retenidos en Almacén',    // 未签收-留仓件入仓
+      'Pendiente normal'         // resto de no confirmados
+    ],
            datasets:[{data:[totP,totDev,totAlm,otrosNF], backgroundColor:['#f87171','#f59e0b','#a78bfa','#64748b'], borderWidth:2, borderColor:'#1e293b'}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11},boxWidth:12,padding:8}}}}
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{
+      legend:{position:'right',labels:{color:'#94a3b8',font:{size:11},boxWidth:12,padding:8}},
+      tooltip:{callbacks:{label:ctx=>{
+        const tot=totNF||1;
+        return ` ${ctx.label}: ${ctx.parsed.toLocaleString('es-DO')} (${(ctx.parsed/tot*100).toFixed(1)}% de no confirmados)`;
+      }}}
+    }}
   });
 }
 
@@ -2064,27 +2137,27 @@ function renderDiariaVelocidad(data) {
   setText('d-vel-t2',    safePct(t0+t1+t2,totF));
   setText('d-vel-t3plus',safePct(t34+t56+t7,totF));
 
-  // Bar: firmados por tramo T+N
+  // Bar: Entrega Confirmada por tramo T+N
   mkChart(chartsD,'d-chart-speed-bar',{ type:'bar',
     data:{ labels:['T+0 (hoy)','T+1','T+2','T+3 a T+4','T+5 a T+6','T+7 o más'],
-           datasets:[{label:'Paquetes firmados',
+           datasets:[{label:'Entrega Confirmada',
              data:[t0,t1,t2,t34,t56,t7],
              backgroundColor:['#34d399','#38bdf8','#60a5fa','#a78bfa','#f59e0b','#f87171'],
              borderRadius:6}]},
     options:{ responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
         const pct=totF>0?((ctx.parsed.y/totF)*100).toFixed(1):'0';
-        return ` ${ctx.parsed.y.toLocaleString('es-DO')} paq. (${pct}% del total firmado)`;
+        return ` ${ctx.parsed.y.toLocaleString('es-DO')} paq. (${pct}% del total confirmado)`;
       }}}},
       scales:{x:{grid:{color:'#1e293b'},ticks:{color:'#94a3b8',font:{size:11}}},
               y:{grid:{color:'#1e293b'},ticks:{color:'#64748b',font:{size:11}}}}}
   });
 
-  // Bar: antigüedad de no firmados
+  // Bar: antigüedad de No Confirmados
   const nf0=S('nfT0'),nf1=S('nfT1'),nf2=S('nfT2'),nf34=S('nfT34'),nf56=S('nfT56'),nf7=S('nfT7p');
   mkChart(chartsD,'d-chart-aging',{ type:'bar',
     data:{ labels:['Ingresó hoy','1 día','2 días','3–4 días','5–6 días','7+ días'],
-           datasets:[{label:'No firmados',
+           datasets:[{label:'No Confirmados',
              data:[nf0,nf1,nf2,nf34,nf56,nf7],
              backgroundColor:['#34d399','#f59e0b','#f59e0b','#f87171','#f87171','#ef4444'],
              borderRadius:6}]},
@@ -2095,17 +2168,17 @@ function renderDiariaVelocidad(data) {
   });
 
   // Insight box
-  const masRapido = t0>0 ? `${safePct(t0,totF)} entregado el mismo día` : 'Sin datos T+0';
+  const masRapido = t0>0 ? `${safePct(t0,totF)} confirmado el mismo día` : 'Sin datos T+0';
   const rezagados = t56+t7;
   const box = document.getElementById('d-insight-box');
   if(box) box.innerHTML = `
     <div class="insight-item"><span class="insight-label">Índice de velocidad</span><span class="insight-val" style="color:var(--green)">${safePct(t0+t1,totF)}</span></div>
     <div style="color:var(--border);font-size:20px">|</div>
-    <div class="insight-item"><span class="insight-label">Entregados mismo día (T+0)</span><span class="insight-val" style="color:var(--purple)">${masRapido}</span></div>
+    <div class="insight-item"><span class="insight-label">Confirmados mismo día (T+0)</span><span class="insight-val" style="color:var(--purple)">${masRapido}</span></div>
     <div style="color:var(--border);font-size:20px">|</div>
     <div class="insight-item"><span class="insight-label">Rezagados (T+5 o más)</span><span class="insight-val" style="color:var(--red)">${n(rezagados)} paq.</span></div>
     <div style="color:var(--border);font-size:20px">|</div>
-    <div class="insight-item"><span class="insight-label">Total pendientes</span><span class="insight-val" style="color:var(--amber)">${n(S('noFirmados'))} paq.</span></div>`;
+    <div class="insight-item"><span class="insight-label">Total No Confirmados</span><span class="insight-val" style="color:var(--amber)">${n(S('noFirmados'))} paq.</span></div>`;
 }
 
 function renderDiariaPilotos(data) {
@@ -2122,9 +2195,9 @@ function renderDiariaPilotos(data) {
   const lbl=top.map(g=>g.name.length>20?g.name.slice(0,20)+'…':g.name);
 
   mkChart(chartsD,'d-chart-pilot-bar',{type:'bar', data:{labels:lbl, datasets:[
-    {label:'Asignados',data:top.map(g=>g.asignado), backgroundColor:'#a78bfa',borderRadius:4},
-    {label:'Firmados', data:top.map(g=>g.firmados),  backgroundColor:'#34d399',borderRadius:4},
-    {label:'T+0 (hoy)',data:top.map(g=>g.firT0),     backgroundColor:'#38bdf8',borderRadius:4}
+    {label:'Asignados',          data:top.map(g=>g.asignado), backgroundColor:'#a78bfa',borderRadius:4},
+    {label:'Entrega Confirmada', data:top.map(g=>g.firmados),  backgroundColor:'#34d399',borderRadius:4},
+    {label:'T+0 (hoy)',          data:top.map(g=>g.firT0),     backgroundColor:'#38bdf8',borderRadius:4}
   ]}, options:hbarOpts()});
 
   mkChart(chartsD,'d-chart-pilot-prob',{type:'bar', data:{labels:lbl, datasets:[
@@ -2164,8 +2237,8 @@ function renderDiariaPuntos(data) {
   const lbl=top.map(g=>g.name.length>17?g.name.slice(0,17)+'…':g.name);
 
   mkChart(chartsD,'d-chart-puntos',{type:'bar', data:{labels:lbl, datasets:[
-    {label:'Asignados',data:top.map(g=>g.asignado),backgroundColor:'#a78bfa',borderRadius:4},
-    {label:'Firmados', data:top.map(g=>g.firmados), backgroundColor:'#34d399',borderRadius:4}
+    {label:'Asignados',          data:top.map(g=>g.asignado),backgroundColor:'#a78bfa',borderRadius:4},
+    {label:'Entrega Confirmada', data:top.map(g=>g.firmados), backgroundColor:'#34d399',borderRadius:4}
   ]}, options:hbarOpts()});
 
   mkChart(chartsD,'d-chart-puntos-prob',{type:'bar', data:{labels:lbl, datasets:[
